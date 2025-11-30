@@ -1,8 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { BookOpen, Users, Award, Clock, CheckCircle2, Star, ArrowRight, MessageCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { BookOpen, Users, Award, Clock, CheckCircle2, Star, ArrowRight, MessageCircle, Sparkles, Brain, TrendingUp, Mail, Phone, Send } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
+import { toast } from "sonner";
 import heroImage from "@/assets/hero-learning.jpg";
 
 const Home = () => {
@@ -98,24 +102,50 @@ const Home = () => {
 
   const testimonials = [
     {
-      name: "Sophie Martin",
+      name: "Amina El Fassi",
       role: "Étudiante niveau B2",
-      comment: "Une plateforme exceptionnelle ! Les cours sont clairs et les professeurs très pédagogues.",
+      comment: "Une plateforme exceptionnelle ! Les cours sont clairs et les professeurs très pédagogues. Je recommande vivement.",
       rating: 5,
     },
     {
-      name: "Thomas Dubois",
+      name: "Youssef Bennani",
       role: "Étudiant niveau A2",
-      comment: "J'ai progressé rapidement grâce aux exercices interactifs et au suivi personnalisé.",
+      comment: "J'ai progressé rapidement grâce aux exercices interactifs et au suivi personnalisé. Acadewi a transformé mon apprentissage.",
       rating: 5,
     },
     {
-      name: "Marie Lefebvre",
+      name: "Salma Alaoui",
       role: "Étudiante niveau C1",
-      comment: "Le meilleur investissement pour maîtriser l'allemand. Interface intuitive et ergonomique.",
+      comment: "Le meilleur investissement pour maîtriser l'allemand. Interface moderne et suivi efficace. Je prépare maintenant mon départ en Allemagne.",
       rating: 5,
     },
   ];
+
+  const [contactForm, setContactForm] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    message: "",
+  });
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleContactSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+    
+    // Simulate form submission
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
+    toast.success("Message envoyé avec succès ! Nous vous recontacterons bientôt.");
+    setContactForm({ name: "", email: "", phone: "", message: "" });
+    setIsSubmitting(false);
+  };
+
+  const handleWhatsAppContact = () => {
+    const message = encodeURIComponent("Bonjour, je souhaite obtenir plus d'informations sur les cours d'allemand chez Acadewi.");
+    window.open(`https://wa.me/212600000000?text=${message}`, "_blank");
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -300,6 +330,69 @@ const Home = () => {
         </div>
       </section>
 
+      {/* AI Innovation Section */}
+      <section className="py-20 bg-gradient-to-br from-primary/5 via-secondary/5 to-primary/5 relative overflow-hidden">
+        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="text-center mb-16 space-y-4 animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-semibold mb-4">
+              <Sparkles className="h-4 w-4" />
+              Bientôt disponible
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold">
+              L'<span className="text-gradient-primary">Intelligence Artificielle</span> au service de votre apprentissage
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Une première au Maroc ! Nous intégrons prochainement l'IA pour révolutionner votre expérience d'apprentissage
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            <Card className="border-2 border-primary/20 hover:border-primary hover:shadow-xl transition-all duration-300 group bg-background/80 backdrop-blur">
+              <CardContent className="p-8 space-y-4 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-light flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                  <Brain className="h-8 w-8 text-primary-foreground" />
+                </div>
+                <h3 className="text-2xl font-bold">Assistant IA Personnalisé</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Un tuteur virtuel disponible 24/7 pour répondre à vos questions et vous guider dans votre apprentissage
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2 border-secondary/20 hover:border-secondary hover:shadow-xl transition-all duration-300 group bg-background/80 backdrop-blur">
+              <CardContent className="p-8 space-y-4 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-secondary to-secondary-light flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                  <TrendingUp className="h-8 w-8 text-secondary-foreground" />
+                </div>
+                <h3 className="text-2xl font-bold">Suivi Intelligent</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  L'IA analyse votre progression et adapte automatiquement le contenu à votre rythme et vos besoins
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2 border-primary/20 hover:border-primary hover:shadow-xl transition-all duration-300 group bg-background/80 backdrop-blur">
+              <CardContent className="p-8 space-y-4 text-center">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-primary-dark flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                  <Sparkles className="h-8 w-8 text-primary-foreground" />
+                </div>
+                <h3 className="text-2xl font-bold">Correction Instantanée</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Recevez des feedbacks immédiats et détaillés sur vos exercices avec des explications personnalisées
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="text-center mt-12">
+            <p className="text-lg text-muted-foreground italic">
+              🇲🇦 Premier centre d'apprentissage de l'allemand au Maroc à intégrer l'IA dans sa pédagogie
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Formulas Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
@@ -394,31 +487,188 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Contact Section */}
+      <section id="contact" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Contactez-<span className="text-gradient-primary">nous</span>
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Une question ? Besoin de plus d'informations ? Nous sommes là pour vous aider
+            </p>
+          </div>
+          
+          <div className="grid lg:grid-cols-2 gap-12 max-w-5xl mx-auto">
+            {/* Contact Form */}
+            <Card className="border-2 hover:border-primary transition-colors">
+              <CardContent className="p-8">
+                <form onSubmit={handleContactSubmit} className="space-y-6">
+                  <div className="space-y-2">
+                    <label htmlFor="name" className="text-sm font-medium">
+                      Nom complet *
+                    </label>
+                    <Input
+                      id="name"
+                      placeholder="Votre nom"
+                      value={contactForm.name}
+                      onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
+                      required
+                      className="h-12"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="email" className="text-sm font-medium">
+                      Email *
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="votre.email@exemple.com"
+                      value={contactForm.email}
+                      onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
+                      required
+                      className="h-12"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="phone" className="text-sm font-medium">
+                      Téléphone
+                    </label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+212 6XX XXX XXX"
+                      value={contactForm.phone}
+                      onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
+                      className="h-12"
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <label htmlFor="message" className="text-sm font-medium">
+                      Message *
+                    </label>
+                    <Textarea
+                      id="message"
+                      placeholder="Décrivez-nous votre projet d'apprentissage..."
+                      value={contactForm.message}
+                      onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
+                      required
+                      rows={5}
+                      className="resize-none"
+                    />
+                  </div>
+                  
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="w-full text-lg"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Envoi en cours..." : (
+                      <>
+                        Envoyer le message <Send className="ml-2 h-5 w-5" />
+                      </>
+                    )}
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+            
+            {/* WhatsApp Contact */}
+            <div className="space-y-8">
+              <Card className="border-2 border-success/20 hover:border-success hover:shadow-xl transition-all duration-300 bg-gradient-to-br from-success/5 to-success/10">
+                <CardContent className="p-8 space-y-6">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-success flex items-center justify-center">
+                      <MessageCircle className="h-8 w-8 text-success-foreground" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold">Contact WhatsApp</h3>
+                      <p className="text-muted-foreground">Réponse rapide garantie</p>
+                    </div>
+                  </div>
+                  
+                  <p className="text-muted-foreground leading-relaxed">
+                    Préférez une conversation directe ? Contactez-nous sur WhatsApp pour une réponse immédiate à toutes vos questions.
+                  </p>
+                  
+                  <Button
+                    onClick={handleWhatsAppContact}
+                    size="lg"
+                    className="w-full text-lg bg-success hover:bg-success/90"
+                  >
+                    <MessageCircle className="mr-2 h-5 w-5" />
+                    Discuter sur WhatsApp
+                  </Button>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-2">
+                <CardContent className="p-8 space-y-4">
+                  <h3 className="text-xl font-bold">Autres moyens de contact</h3>
+                  
+                  <div className="flex items-start gap-3">
+                    <Mail className="h-5 w-5 text-primary mt-1" />
+                    <div>
+                      <p className="font-medium">Email</p>
+                      <a href="mailto:contact@acadewi.com" className="text-muted-foreground hover:text-primary transition-colors">
+                        contact@acadewi.com
+                      </a>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <Phone className="h-5 w-5 text-primary mt-1" />
+                    <div>
+                      <p className="font-medium">Téléphone</p>
+                      <a href="tel:+212600000000" className="text-muted-foreground hover:text-primary transition-colors">
+                        +212 6XX XXX XXX
+                      </a>
+                    </div>
+                  </div>
+                  
+                  <div className="pt-4 border-t">
+                    <p className="text-sm text-muted-foreground">
+                      <strong>Horaires :</strong> Lun-Ven : 9h-18h | Sam : 10h-16h
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-br from-primary to-primary-dark text-primary-foreground">
-        <div className="container mx-auto px-4 text-center space-y-8">
-          <h2 className="text-4xl md:text-5xl font-bold">
+      <section className="py-20 bg-gradient-to-br from-primary via-primary-dark to-secondary text-primary-foreground relative overflow-hidden">
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 bg-grid-pattern" />
+        </div>
+        <div className="container mx-auto px-4 text-center space-y-8 relative z-10">
+          <h2 className="text-4xl md:text-5xl font-bold animate-fade-in-up">
             Rejoignez les étudiants qui réussissent avec Acadewi
           </h2>
-          <p className="text-xl opacity-90 max-w-2xl mx-auto">
+          <p className="text-xl opacity-90 max-w-2xl mx-auto animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
             Études, travail, migration : nous vous accompagnons vers la réussite en Allemagne
           </p>
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Button asChild size="lg" variant="secondary" className="text-lg px-8">
+          <div className="flex flex-wrap gap-4 justify-center animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+            <Button asChild size="lg" variant="secondary" className="text-lg px-8 shadow-xl hover:scale-105 transition-transform">
               <Link to="/register">
-                S'inscrire via formulaire <ArrowRight className="ml-2 h-5 w-5" />
+                S'inscrire maintenant <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
             <Button
-              asChild
+              onClick={handleWhatsAppContact}
               size="lg"
               variant="outline"
-              className="text-lg px-8 bg-transparent border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
+              className="text-lg px-8 bg-transparent border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary shadow-xl hover:scale-105 transition-transform"
             >
-              <a href="https://wa.me/212" target="_blank" rel="noopener noreferrer">
-                <MessageCircle className="mr-2 h-5 w-5" />
-                Contacter via WhatsApp
-              </a>
+              <MessageCircle className="mr-2 h-5 w-5" />
+              Contacter via WhatsApp
             </Button>
           </div>
         </div>
