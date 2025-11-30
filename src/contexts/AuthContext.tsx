@@ -86,7 +86,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .single();
       
       const role = roleData?.role || 'etudiant';
-      navigate('/dashboard');
+      
+      // Navigate based on role
+      if (role === 'gestionnaire') {
+        navigate('/gestionnaire/dashboard');
+      } else if (role === 'professeur') {
+        navigate('/prof/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
       
       return { error: null };
     } catch (error) {
