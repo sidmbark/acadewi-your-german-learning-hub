@@ -3,12 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { BookOpen, Eye, EyeOff, Loader2, CheckCircle2, Upload } from "lucide-react";
+import { Eye, EyeOff, Loader2, CheckCircle2, Upload } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import logo from "@/assets/acadewi-logo.jpeg";
 
 const Register = () => {
   const [step, setStep] = useState(1);
@@ -164,9 +165,8 @@ const Register = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8 animate-fade-in-up">
-          <Link to="/" className="inline-flex items-center gap-2 mb-4">
-            <BookOpen className="h-10 w-10 text-primary" />
-            <span className="text-3xl font-bold text-gradient-primary">Acadewi</span>
+          <Link to="/" className="inline-flex items-center justify-center mb-4">
+            <img src={logo} alt="Acadewi Logo" className="h-20 w-auto" />
           </Link>
           <p className="text-muted-foreground">Créez votre compte et commencez à apprendre l'allemand</p>
         </div>
