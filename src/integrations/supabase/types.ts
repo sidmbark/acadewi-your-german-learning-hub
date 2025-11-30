@@ -14,16 +14,358 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      cours: {
+        Row: {
+          created_at: string | null
+          date: string
+          description: string | null
+          groupe_id: string | null
+          heure: string
+          id: string
+          lien_zoom: string
+          professeur_id: string | null
+          statut: string | null
+          titre: string
+        }
+        Insert: {
+          created_at?: string | null
+          date: string
+          description?: string | null
+          groupe_id?: string | null
+          heure: string
+          id?: string
+          lien_zoom: string
+          professeur_id?: string | null
+          statut?: string | null
+          titre: string
+        }
+        Update: {
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          groupe_id?: string | null
+          heure?: string
+          id?: string
+          lien_zoom?: string
+          professeur_id?: string | null
+          statut?: string | null
+          titre?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cours_groupe_id_fkey"
+            columns: ["groupe_id"]
+            isOneToOne: false
+            referencedRelation: "groupes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      documents: {
+        Row: {
+          cours_id: string | null
+          date_upload: string | null
+          fichier_url: string
+          id: string
+          taille: number | null
+          titre: string
+          type: string | null
+        }
+        Insert: {
+          cours_id?: string | null
+          date_upload?: string | null
+          fichier_url: string
+          id?: string
+          taille?: number | null
+          titre: string
+          type?: string | null
+        }
+        Update: {
+          cours_id?: string | null
+          date_upload?: string | null
+          fichier_url?: string
+          id?: string
+          taille?: number | null
+          titre?: string
+          type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "documents_cours_id_fkey"
+            columns: ["cours_id"]
+            isOneToOne: false
+            referencedRelation: "cours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercices: {
+        Row: {
+          date_creation: string | null
+          duree: number | null
+          groupe_id: string | null
+          id: string
+          questions: Json
+          titre: string
+          type: string
+        }
+        Insert: {
+          date_creation?: string | null
+          duree?: number | null
+          groupe_id?: string | null
+          id?: string
+          questions: Json
+          titre: string
+          type: string
+        }
+        Update: {
+          date_creation?: string | null
+          duree?: number | null
+          groupe_id?: string | null
+          id?: string
+          questions?: Json
+          titre?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercices_groupe_id_fkey"
+            columns: ["groupe_id"]
+            isOneToOne: false
+            referencedRelation: "groupes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_members: {
+        Row: {
+          date_assignation: string | null
+          etudiant_id: string | null
+          groupe_id: string | null
+          id: string
+        }
+        Insert: {
+          date_assignation?: string | null
+          etudiant_id?: string | null
+          groupe_id?: string | null
+          id?: string
+        }
+        Update: {
+          date_assignation?: string | null
+          etudiant_id?: string | null
+          groupe_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_members_groupe_id_fkey"
+            columns: ["groupe_id"]
+            isOneToOne: false
+            referencedRelation: "groupes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      groupes: {
+        Row: {
+          couleur: string | null
+          created_at: string | null
+          horaire: string | null
+          id: string
+          niveau: string
+          nom: string
+          professeur_id: string | null
+        }
+        Insert: {
+          couleur?: string | null
+          created_at?: string | null
+          horaire?: string | null
+          id?: string
+          niveau: string
+          nom: string
+          professeur_id?: string | null
+        }
+        Update: {
+          couleur?: string | null
+          created_at?: string | null
+          horaire?: string | null
+          id?: string
+          niveau?: string
+          nom?: string
+          professeur_id?: string | null
+        }
+        Relationships: []
+      }
+      notifications: {
+        Row: {
+          date: string | null
+          id: string
+          lu: boolean | null
+          message: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          date?: string | null
+          id?: string
+          lu?: boolean | null
+          message: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          date?: string | null
+          id?: string
+          lu?: boolean | null
+          message?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      presences: {
+        Row: {
+          cours_id: string | null
+          date: string | null
+          etudiant_id: string | null
+          id: string
+          present: boolean | null
+        }
+        Insert: {
+          cours_id?: string | null
+          date?: string | null
+          etudiant_id?: string | null
+          id?: string
+          present?: boolean | null
+        }
+        Update: {
+          cours_id?: string | null
+          date?: string | null
+          etudiant_id?: string | null
+          id?: string
+          present?: boolean | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "presences_cours_id_fkey"
+            columns: ["cours_id"]
+            isOneToOne: false
+            referencedRelation: "cours"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          adresse: string | null
+          created_at: string | null
+          date_inscription: string | null
+          id: string
+          nom: string
+          photo_paiement: string | null
+          prenom: string
+          statut: string | null
+          telephone: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          adresse?: string | null
+          created_at?: string | null
+          date_inscription?: string | null
+          id: string
+          nom: string
+          photo_paiement?: string | null
+          prenom: string
+          statut?: string | null
+          telephone?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          adresse?: string | null
+          created_at?: string | null
+          date_inscription?: string | null
+          id?: string
+          nom?: string
+          photo_paiement?: string | null
+          prenom?: string
+          statut?: string | null
+          telephone?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      progression: {
+        Row: {
+          date_completion: string | null
+          etudiant_id: string | null
+          exercice_id: string | null
+          id: string
+          score: number | null
+          tentatives: number | null
+        }
+        Insert: {
+          date_completion?: string | null
+          etudiant_id?: string | null
+          exercice_id?: string | null
+          id?: string
+          score?: number | null
+          tentatives?: number | null
+        }
+        Update: {
+          date_completion?: string | null
+          etudiant_id?: string | null
+          exercice_id?: string | null
+          id?: string
+          score?: number | null
+          tentatives?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "progression_exercice_id_fkey"
+            columns: ["exercice_id"]
+            isOneToOne: false
+            referencedRelation: "exercices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "etudiant" | "professeur" | "gestionnaire"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +492,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["etudiant", "professeur", "gestionnaire"],
+    },
   },
 } as const
