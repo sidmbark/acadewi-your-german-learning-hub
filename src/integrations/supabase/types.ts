@@ -391,6 +391,7 @@ export type Database = {
           created_at: string | null
           date_inscription: string | null
           id: string
+          niveau: string | null
           nom: string
           photo_paiement: string | null
           prenom: string
@@ -403,6 +404,7 @@ export type Database = {
           created_at?: string | null
           date_inscription?: string | null
           id: string
+          niveau?: string | null
           nom: string
           photo_paiement?: string | null
           prenom: string
@@ -415,6 +417,7 @@ export type Database = {
           created_at?: string | null
           date_inscription?: string | null
           id?: string
+          niveau?: string | null
           nom?: string
           photo_paiement?: string | null
           prenom?: string

@@ -71,6 +71,8 @@ const GestionnaireDashboard = () => {
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [selectedGroupeId, setSelectedGroupeId] = useState<string>('');
   const [selectedProfId, setSelectedProfId] = useState<string>('');
+  const [validatingStudent, setValidatingStudent] = useState<string | null>(null);
+  const [selectedNiveau, setSelectedNiveau] = useState<string>('A1');
   const [loading, setLoading] = useState(true);
   
   // Form state for creating a new group
@@ -228,20 +230,25 @@ const GestionnaireDashboard = () => {
     }
   };
 
-  const handleValidateStudent = async (profileId: string) => {
+  const handleValidateStudent = async (profileId: string, niveau: string) => {
     try {
       const { error } = await supabase
         .from('profiles')
-        .update({ statut: 'valide' })
+        .update({ 
+          statut: 'valide',
+          niveau: niveau 
+        })
         .eq('id', profileId);
 
       if (error) throw error;
 
       toast({
         title: 'Inscription validée',
-        description: "L'étudiant peut maintenant accéder à la plateforme",
+        description: `L'étudiant a été validé avec le niveau ${niveau}`,
       });
 
+      setValidatingStudent(null);
+      setSelectedNiveau('A1');
       fetchPendingProfiles();
       fetchValidProfiles();
     } catch (error) {
@@ -598,14 +605,61 @@ const GestionnaireDashboard = () => {
                             {getStatusBadge(profile.statut)}
                             {profile.statut === 'en_attente' && (
                               <>
-                                <Button
-                                  size="sm"
-                                  className="bg-success hover:bg-success/90 text-success-foreground"
-                                  onClick={() => handleValidateStudent(profile.id)}
-                                >
-                                  <CheckCircle className="h-4 w-4 mr-1" />
-                                  Valider
-                                </Button>
+                                <Dialog open={validatingStudent === profile.id} onOpenChange={(open) => !open && setValidatingStudent(null)}>
+                                  <DialogTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      className="bg-success hover:bg-success/90 text-success-foreground"
+                                      onClick={() => setValidatingStudent(profile.id)}
+                                    >
+                                      <CheckCircle className="h-4 w-4 mr-1" />
+                                      Valider
+                                    </Button>
+                                  </DialogTrigger>
+                                  <DialogContent>
+                                    <DialogHeader>
+                                      <DialogTitle>Valider l'inscription</DialogTitle>
+                                      <DialogDescription>
+                                        Choisissez le niveau pour {profile.prenom} {profile.nom}
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="space-y-4 py-4">
+                                      <div className="space-y-2">
+                                        <Label htmlFor="niveau-validation">Niveau *</Label>
+                                        <Select
+                                          value={selectedNiveau}
+                                          onValueChange={setSelectedNiveau}
+                                        >
+                                          <SelectTrigger id="niveau-validation">
+                                            <SelectValue />
+                                          </SelectTrigger>
+                                          <SelectContent>
+                                            <SelectItem value="A1">A1</SelectItem>
+                                            <SelectItem value="A2">A2</SelectItem>
+                                            <SelectItem value="B1">B1</SelectItem>
+                                            <SelectItem value="B2">B2</SelectItem>
+                                            <SelectItem value="C1">C1</SelectItem>
+                                            <SelectItem value="C2">C2</SelectItem>
+                                          </SelectContent>
+                                        </Select>
+                                      </div>
+                                    </div>
+                                    <DialogFooter>
+                                      <Button
+                                        variant="outline"
+                                        onClick={() => setValidatingStudent(null)}
+                                      >
+                                        Annuler
+                                      </Button>
+                                      <Button
+                                        className="bg-success hover:bg-success/90 text-success-foreground"
+                                        onClick={() => handleValidateStudent(profile.id, selectedNiveau)}
+                                      >
+                                        Valider
+                                      </Button>
+                                    </DialogFooter>
+                                  </DialogContent>
+                                </Dialog>
                                 <Button
                                   size="sm"
                                   variant="outline"
