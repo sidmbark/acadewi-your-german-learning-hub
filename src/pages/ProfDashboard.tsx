@@ -58,6 +58,13 @@ export default function ProfDashboard() {
   useEffect(() => {
     if (user) {
       fetchData();
+      
+      // Auto-refresh every 30 seconds
+      const interval = setInterval(() => {
+        fetchData();
+      }, 30000);
+      
+      return () => clearInterval(interval);
     }
   }, [user]);
 
