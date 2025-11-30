@@ -11,7 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { Calendar, Plus, Users, BookOpen, LogOut, FileText, Upload, Download, Edit2, Trash2, MessageSquare } from 'lucide-react';
+import { StudentFeedback } from '@/components/StudentFeedback';
+import { Calendar, Plus, Users, BookOpen, LogOut, FileText, Upload, Download, Edit2, Trash2 } from 'lucide-react';
 
 export default function ProfDashboard() {
   const { user, signOut } = useAuth();
@@ -618,10 +619,10 @@ export default function ProfDashboard() {
                       <TableCell>{student.prenom}</TableCell>
                       <TableCell>{student.telephone}</TableCell>
                       <TableCell>
-                        <Button variant="outline" size="sm">
-                          <MessageSquare className="h-4 w-4 mr-1" />
-                          Ajouter
-                        </Button>
+                        <StudentFeedback 
+                          studentId={student.id}
+                          studentName={`${student.prenom} ${student.nom}`}
+                        />
                       </TableCell>
                     </TableRow>
                   ))}
