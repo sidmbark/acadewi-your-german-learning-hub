@@ -73,16 +73,18 @@ const ProfLogin = () => {
           </CardHeader>
           <CardContent>
             {user && userRole && userRole !== 'professeur' && (
-              <div className="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg">
+              <div className="mb-4 p-4 bg-warning/10 border border-warning/30 rounded-lg space-y-3">
                 <p className="text-sm text-warning-foreground">
-                  Vous êtes déjà connecté en tant que {userRole}. 
-                  <button 
-                    onClick={() => signOut()}
-                    className="ml-2 underline font-medium"
-                  >
-                    Se déconnecter
-                  </button>
+                  Vous êtes déjà connecté en tant que <strong>{userRole}</strong>.
                 </p>
+                <Button 
+                  onClick={() => signOut()}
+                  variant="outline"
+                  className="w-full"
+                  type="button"
+                >
+                  Se déconnecter
+                </Button>
               </div>
             )}
             <form onSubmit={handleSubmit} className="space-y-4">
