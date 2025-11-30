@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { CoursDetailDialog } from '@/components/CoursDetailDialog';
 
 interface Cours {
   id: string;
@@ -15,6 +16,7 @@ interface Cours {
   date: string;
   heure: string;
   lien_zoom: string;
+  professeur_id: string;
   groupes: {
     nom: string;
     niveau: string;
@@ -49,7 +51,9 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   
-  const [nextCours, setNextCours] = useState<Cours | null>(null);
+  const [prochainsCours, setProchainsCours] = useState<Cours[]>([]);
+  const [selectedCours, setSelectedCours] = useState<Cours | null>(null);
+  const [coursDialogOpen, setCoursDialogOpen] = useState(false);
   const [exercices, setExercices] = useState<Exercice[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [groupeInfo, setGroupeInfo] = useState<{ nom: string; niveau: string } | null>(null);
@@ -105,7 +109,7 @@ const Dashboard = () => {
         setGroupeInfo(groupData);
       }
 
-      // Récupérer le prochain cours (futur uniquement)
+      // Récupérer les prochains cours (futurs uniquement)
       const now = new Date();
       const today = now.toISOString().split('T')[0];
 
@@ -118,16 +122,34 @@ const Dashboard = () => {
         .eq('groupe_id', groupMember.groupe_id)
         .gte('date', today)
         .order('date', { ascending: true })
-        .order('heure', { ascending: true });
+        .order('heure', { ascending: true })
+        .limit(5);
 
-      // Filter out past courses for today
+      // Filter out past courses for today and fetch professor info
       const futureCours = coursData?.filter(c => {
         const coursDateTime = new Date(`${c.date}T${c.heure}`);
         return coursDateTime.getTime() > now.getTime();
       });
 
+      // Fetch professor info for each course
       if (futureCours && futureCours.length > 0) {
-        setNextCours(futureCours[0] as Cours);
+        const coursWithProfs = await Promise.all(
+          futureCours.map(async (cours) => {
+            const { data: profData } = await supabase
+              .from('profiles')
+              .select('nom, prenom')
+              .eq('id', cours.professeur_id)
+              .single();
+            
+            return {
+              ...cours,
+              professorInfo: profData,
+            };
+          })
+        );
+        setProchainsCours(coursWithProfs as any);
+      } else {
+        setProchainsCours([]);
       }
 
       // Récupérer les exercices du groupe
@@ -225,6 +247,11 @@ const Dashboard = () => {
 
   const handleJoinZoom = (lienZoom: string) => {
     window.open(lienZoom, '_blank', 'width=1200,height=800');
+  };
+
+  const handleCoursClick = (cours: Cours) => {
+    setSelectedCours(cours);
+    setCoursDialogOpen(true);
   };
 
   if (loading || loadingData) {
@@ -334,50 +361,66 @@ const Dashboard = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
-          {/* Prochain cours */}
+          {/* Prochains cours */}
           <Card className="border-2">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-primary" />
-                Prochain cours
+                Prochains cours
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {nextCours ? (
-                <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-4 border-l-4 border-primary">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-lg">{nextCours.titre}</h3>
-                    <span className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
-                      {getTimeUntilCours(nextCours.date, nextCours.heure)}
-                    </span>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-3">{nextCours.description || 'Pas de description'}</p>
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm">
-                      <p className="text-muted-foreground">
-                        Groupe: <span className="font-medium text-foreground">{nextCours.groupes?.nom} - {nextCours.groupes?.niveau}</span>
-                      </p>
-                      <p className="text-muted-foreground">
-                        Horaire: <span className="font-medium text-foreground">
-                          {new Date(nextCours.date).toLocaleDateString('fr-FR')} à {nextCours.heure}
-                        </span>
-                      </p>
+            <CardContent className="space-y-3">
+              {prochainsCours.length > 0 ? (
+                prochainsCours.map((cours) => (
+                  <div
+                    key={cours.id}
+                    className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-4 border-l-4 border-primary cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => handleCoursClick(cours)}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-base">{cours.titre}</h3>
+                      <span className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
+                        {getTimeUntilCours(cours.date, cours.heure)}
+                      </span>
                     </div>
-                    {canJoinCours(nextCours.date, nextCours.heure) ? (
-                      <Button 
-                        variant="hero" 
+                    <div className="text-sm space-y-1">
+                      <p className="text-muted-foreground">
+                        {new Date(cours.date).toLocaleDateString('fr-FR')} à {cours.heure}
+                      </p>
+                      {(cours as any).professorInfo && (
+                        <p className="text-muted-foreground">
+                          Prof: <span className="font-medium text-foreground">
+                            {(cours as any).professorInfo.prenom} {(cours as any).professorInfo.nom}
+                          </span>
+                        </p>
+                      )}
+                    </div>
+                    <div className="mt-3 flex gap-2">
+                      {canJoinCours(cours.date, cours.heure) && (
+                        <Button
+                          variant="hero"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleJoinZoom(cours.lien_zoom);
+                          }}
+                        >
+                          Rejoindre
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline"
                         size="sm"
-                        onClick={() => handleJoinZoom(nextCours.lien_zoom)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleCoursClick(cours);
+                        }}
                       >
-                        Rejoindre
+                        Détails
                       </Button>
-                    ) : (
-                      <Button variant="outline" size="sm" disabled>
-                        Bientôt disponible
-                      </Button>
-                    )}
+                    </div>
                   </div>
-                </div>
+                ))
               ) : (
                 <p className="text-center text-muted-foreground py-8">
                   Aucun cours planifié pour le moment
@@ -468,6 +511,15 @@ const Dashboard = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Cours Detail Dialog */}
+        <CoursDetailDialog
+          cours={selectedCours}
+          open={coursDialogOpen}
+          onOpenChange={setCoursDialogOpen}
+          canJoin={selectedCours ? canJoinCours(selectedCours.date, selectedCours.heure) : false}
+          onJoinZoom={() => selectedCours && handleJoinZoom(selectedCours.lien_zoom)}
+        />
 
         {/* Quick Actions */}
         <div className="mt-8">
