@@ -1,12 +1,45 @@
+import { useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Users, Calendar, FileText, TrendingUp, Clock } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from '@/contexts/AuthContext';
 
 const Dashboard = () => {
-  // Données de démonstration - À remplacer avec de vraies données
-  const userRole = "student"; // "student" | "professor" | "admin"
-  const userName = "Jean Dupont";
+  const { user, userRole, signOut, loading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Redirect if not logged in
+    if (!loading && !user) {
+      navigate('/login');
+      return;
+    }
+
+    // Redirect based on role
+    if (!loading && userRole) {
+      if (userRole === 'professeur') {
+        navigate('/prof/dashboard');
+      } else if (userRole === 'gestionnaire') {
+        navigate('/gestionnaire/dashboard');
+      }
+    }
+  }, [user, userRole, loading, navigate]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || userRole !== 'etudiant') {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -18,9 +51,9 @@ const Dashboard = () => {
             <span className="text-2xl font-bold text-gradient-primary">Acadewi</span>
           </div>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-muted-foreground">Bienvenue, <span className="font-semibold text-foreground">{userName}</span></span>
-            <Button variant="outline" asChild>
-              <Link to="/">Déconnexion</Link>
+            <span className="text-sm text-muted-foreground">Bienvenue, <span className="font-semibold text-foreground">{user?.email}</span></span>
+            <Button variant="outline" onClick={signOut}>
+              Déconnexion
             </Button>
           </div>
         </div>
