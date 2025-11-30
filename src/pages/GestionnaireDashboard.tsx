@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { BookOpen, Users, CheckCircle, XCircle, Plus, UserPlus } from 'lucide-react';
 
@@ -427,63 +428,135 @@ const GestionnaireDashboard = () => {
           </Card>
         </div>
 
+        <Tabs defaultValue="students" className="mb-6">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="students">Étudiants en attente</TabsTrigger>
+            <TabsTrigger value="professors">Professeurs</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="students">
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-warning" />
+                  Inscriptions étudiants en attente
+                </CardTitle>
+                <CardDescription>Validez ou refusez les nouvelles inscriptions</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {pendingProfiles.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Aucune inscription en attente
+                  </p>
+                ) : (
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {pendingProfiles.map((profile) => (
+                      <div
+                        key={profile.id}
+                        className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold">
+                            {profile.prenom} {profile.nom}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{profile.telephone}</p>
+                          <p className="text-sm text-muted-foreground">{profile.adresse}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Inscrit le: {new Date(profile.date_inscription).toLocaleDateString('fr-FR')}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="bg-success hover:bg-success/90 text-success-foreground"
+                            onClick={() => handleValidateProfile(profile.id)}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Valider
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                            onClick={() => handleRejectProfile(profile.id)}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Refuser
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="professors">
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Gestion des professeurs
+                </CardTitle>
+                <CardDescription>Tous les professeurs inscrits</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {professors.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Aucun professeur inscrit
+                  </p>
+                ) : (
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {professors.map((prof) => (
+                      <div
+                        key={prof.id}
+                        className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border"
+                      >
+                        <div className="flex-1">
+                          <h4 className="font-semibold">
+                            {prof.prenom} {prof.nom}
+                          </h4>
+                          <p className="text-sm text-muted-foreground">{prof.telephone}</p>
+                          <p className="text-sm text-muted-foreground">{prof.adresse}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Inscrit le: {new Date(prof.date_inscription).toLocaleDateString('fr-FR')}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          {getStatusBadge(prof.statut)}
+                          {prof.statut === 'en_attente' && (
+                            <>
+                              <Button
+                                size="sm"
+                                className="bg-success hover:bg-success/90 text-success-foreground"
+                                onClick={() => handleValidateProfile(prof.id)}
+                              >
+                                <CheckCircle className="h-4 w-4 mr-1" />
+                                Valider
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                onClick={() => handleRejectProfile(prof.id)}
+                              >
+                                <XCircle className="h-4 w-4 mr-1" />
+                                Refuser
+                              </Button>
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+
         <div className="grid lg:grid-cols-2 gap-6 mb-6">
-          {/* Inscriptions en attente */}
-          <Card className="border-2">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5 text-warning" />
-                Inscriptions en attente
-              </CardTitle>
-              <CardDescription>Validez ou refusez les nouvelles inscriptions</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {pendingProfiles.length === 0 ? (
-                <p className="text-center text-muted-foreground py-8">
-                  Aucune inscription en attente
-                </p>
-              ) : (
-                <div className="space-y-4 max-h-96 overflow-y-auto">
-                  {pendingProfiles.map((profile) => (
-                    <div
-                      key={profile.id}
-                      className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border"
-                    >
-                      <div className="flex-1">
-                        <h4 className="font-semibold">
-                          {profile.prenom} {profile.nom}
-                        </h4>
-                        <p className="text-sm text-muted-foreground">{profile.telephone}</p>
-                        <p className="text-sm text-muted-foreground">{profile.adresse}</p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Inscrit le: {new Date(profile.date_inscription).toLocaleDateString('fr-FR')}
-                        </p>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          className="bg-success hover:bg-success/90 text-success-foreground"
-                          onClick={() => handleValidateProfile(profile.id)}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-1" />
-                          Valider
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                          onClick={() => handleRejectProfile(profile.id)}
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Refuser
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
 
           {/* Créer un groupe */}
           <Card className="border-2">
