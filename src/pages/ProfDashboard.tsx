@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,6 +23,7 @@ export default function ProfDashboard() {
   const [students, setStudents] = useState<any[]>([]);
   const [documents, setDocuments] = useState<any[]>([]);
   const [exercices, setExercices] = useState<any[]>([]);
+  const [submissions, setSubmissions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [openCours, setOpenCours] = useState(false);
   const [openDoc, setOpenDoc] = useState(false);
@@ -126,6 +128,28 @@ export default function ProfDashboard() {
         .order('date_creation', { ascending: false });
       
       setExercices(exercicesData || []);
+
+      // Fetch submissions for professor's groups
+      if (groupesData && groupesData.length > 0) {
+        const groupeIds = groupesData.map(g => g.id);
+        
+        const { data: submissionsData } = await supabase
+          .from('exercice_submissions')
+          .select(`
+            *,
+            exercices!inner(
+              titre,
+              type,
+              groupe_id,
+              groupes(nom, niveau)
+            ),
+            profiles(nom, prenom)
+          `)
+          .in('exercices.groupe_id', groupeIds)
+          .order('date_soumission', { ascending: false });
+        
+        setSubmissions(submissionsData || []);
+      }
 
       setLoading(false);
     } catch (error) {
@@ -497,11 +521,12 @@ export default function ProfDashboard() {
         </div>
 
         <Tabs defaultValue="cours" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="cours">Cours</TabsTrigger>
             <TabsTrigger value="students">Étudiants</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="exercices">Quiz/Devoirs</TabsTrigger>
+            <TabsTrigger value="soumissions">Soumissions</TabsTrigger>
           </TabsList>
 
           {/* Cours Tab */}
@@ -949,6 +974,170 @@ export default function ProfDashboard() {
                   </div>
                 </Card>
               ))}
+            </div>
+          </TabsContent>
+
+          {/* Soumissions Tab */}
+          <TabsContent value="soumissions" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold">Soumissions d'exercices</h2>
+              <p className="text-sm text-muted-foreground">
+                {submissions.filter((s: any) => !s.corrige).length} à corriger
+              </p>
+            </div>
+            
+            <div className="grid gap-4">
+              {submissions.length > 0 ? (
+                submissions.map((submission: any) => (
+                  <Card key={submission.id} className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h3 className="font-semibold text-lg">{submission.exercices?.titre}</h3>
+                          <div className="flex items-center gap-4 text-sm text-muted-foreground mt-1">
+                            <span>{submission.exercices?.type}</span>
+                            <span>Par: {submission.profiles?.prenom} {submission.profiles?.nom}</span>
+                            <span>Le {new Date(submission.date_soumission).toLocaleDateString('fr-FR')}</span>
+                            {submission.exercices?.groupes && (
+                              <span className="px-2 py-0.5 bg-primary/10 rounded-full text-xs">
+                                {submission.exercices.groupes.nom}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        {submission.corrige ? (
+                          <Badge className="bg-success text-success-foreground">Corrigé</Badge>
+                        ) : (
+                          <Badge className="bg-warning text-warning-foreground">En attente</Badge>
+                        )}
+                      </div>
+
+                      <div className="border-t pt-3">
+                        <h4 className="font-semibold mb-2 text-sm">Réponses de l'étudiant:</h4>
+                        <div className="space-y-2 bg-muted/50 p-3 rounded-lg">
+                          {Object.entries(submission.reponses || {}).map(([qIndex, answer]: [string, any]) => (
+                            <div key={qIndex} className="text-sm">
+                              <span className="font-medium">Q{parseInt(qIndex) + 1}:</span>{' '}
+                              {typeof answer === 'number' ? `Réponse ${answer + 1}` : answer}
+                            </div>
+                          ))}
+                        </div>
+                        {submission.fichiers_urls && submission.fichiers_urls.length > 0 && (
+                          <div className="mt-2">
+                            <p className="text-sm font-medium mb-1">Fichiers joints:</p>
+                            {submission.fichiers_urls.map((url: string, idx: number) => (
+                              <a
+                                key={idx}
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm text-primary hover:underline block"
+                              >
+                                Fichier {idx + 1}
+                              </a>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {!submission.corrige && (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button className="w-full" variant="outline">
+                              Corriger et noter
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Correction - {submission.exercices?.titre}</DialogTitle>
+                            </DialogHeader>
+                            <form
+                              onSubmit={async (e) => {
+                                e.preventDefault();
+                                const formData = new FormData(e.currentTarget);
+                                const note = parseFloat(formData.get('note') as string);
+                                const commentaire = formData.get('commentaire') as string;
+
+                                try {
+                                  const { error } = await supabase
+                                    .from('exercice_submissions')
+                                    .update({
+                                      note,
+                                      commentaire_prof: commentaire,
+                                      corrige: true,
+                                    })
+                                    .eq('id', submission.id);
+
+                                  if (error) throw error;
+
+                                  toast({
+                                    title: 'Succès',
+                                    description: 'La soumission a été corrigée',
+                                  });
+
+                                  fetchData();
+                                } catch (error: any) {
+                                  toast({
+                                    title: 'Erreur',
+                                    description: error.message,
+                                    variant: 'destructive',
+                                  });
+                                }
+                              }}
+                              className="space-y-4"
+                            >
+                              <div className="space-y-2">
+                                <Label htmlFor="note">Note sur 20 *</Label>
+                                <Input
+                                  id="note"
+                                  name="note"
+                                  type="number"
+                                  min="0"
+                                  max="20"
+                                  step="0.5"
+                                  required
+                                />
+                              </div>
+                              <div className="space-y-2">
+                                <Label htmlFor="commentaire">Commentaire</Label>
+                                <Textarea
+                                  id="commentaire"
+                                  name="commentaire"
+                                  rows={4}
+                                  placeholder="Vos remarques et conseils..."
+                                />
+                              </div>
+                              <div className="flex justify-end gap-2">
+                                <Button type="button" variant="outline">
+                                  Annuler
+                                </Button>
+                                <Button type="submit">Enregistrer</Button>
+                              </div>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      )}
+
+                      {submission.corrige && (
+                        <div className="border-t pt-3 bg-success/10 p-3 rounded-lg">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-semibold">Note: {submission.note}/20</span>
+                          </div>
+                          {submission.commentaire_prof && (
+                            <p className="text-sm text-muted-foreground">
+                              <span className="font-medium">Commentaire:</span> {submission.commentaire_prof}
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </Card>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  Aucune soumission pour le moment
+                </p>
+              )}
             </div>
           </TabsContent>
         </Tabs>
