@@ -14,9 +14,102 @@ const GestionnaireLogin = () => {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCreatingAdmin, setIsCreatingAdmin] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, userRole } = useAuth();
+
+  // Fonction pour créer le compte admin s'il n'existe pas
+  const handleCreateAdminAccount = async () => {
+    setIsCreatingAdmin(true);
+    
+    try {
+      // Vérifier si le compte existe déjà
+      const { data: existingUser } = await supabase.auth.signInWithPassword({
+        email: 'admin@acadewi.com',
+        password: 'admin',
+      });
+
+      if (existingUser.user) {
+        toast({
+          title: "Compte existant",
+          description: "Le compte admin existe déjà. Vous pouvez vous connecter.",
+        });
+        setIsCreatingAdmin(false);
+        return;
+      }
+    } catch (error) {
+      // Le compte n'existe pas, on le crée
+    }
+
+    try {
+      // Créer le compte admin
+      const { data, error } = await supabase.auth.signUp({
+        email: 'admin@acadewi.com',
+        password: 'admin',
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            nom: 'Admin',
+            prenom: 'Gestionnaire',
+            telephone: '+212 6 00 00 00 00',
+            adresse: 'Acadewi HQ',
+          },
+        },
+      });
+
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: error.message,
+          variant: "destructive",
+        });
+        setIsCreatingAdmin(false);
+        return;
+      }
+
+      // Attendre un peu pour que le trigger s'exécute
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      // Mettre à jour le rôle en gestionnaire
+      if (data.user) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .update({ role: 'gestionnaire' })
+          .eq('user_id', data.user.id);
+
+        if (roleError) {
+          console.error('Error updating role:', roleError);
+        }
+
+        // Mettre à jour le statut du profil
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .update({ statut: 'valide' })
+          .eq('id', data.user.id);
+
+        if (profileError) {
+          console.error('Error updating profile:', profileError);
+        }
+      }
+
+      toast({
+        title: "Compte créé",
+        description: "Le compte admin a été créé avec succès. Vous pouvez maintenant vous connecter avec admin@acadewi.com / admin",
+      });
+
+      setEmail('admin@acadewi.com');
+      setPassword('admin');
+    } catch (error: any) {
+      toast({
+        title: "Erreur",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingAdmin(false);
+    }
+  };
 
   useEffect(() => {
     // Si déjà connecté en tant que gestionnaire, rediriger
@@ -145,7 +238,7 @@ const GestionnaireLogin = () => {
               <Button
                 type="submit"
                 className="w-full h-11"
-                disabled={isLoading}
+                disabled={isLoading || isCreatingAdmin}
                 variant="hero"
               >
                 {isLoading ? (
@@ -161,6 +254,25 @@ const GestionnaireLogin = () => {
                 )}
               </Button>
             </form>
+
+            <div className="mt-4">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleCreateAdminAccount}
+                disabled={isLoading || isCreatingAdmin}
+              >
+                {isCreatingAdmin ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Création du compte...
+                  </>
+                ) : (
+                  'Créer le compte admin (première utilisation)'
+                )}
+              </Button>
+            </div>
 
             <div className="mt-6 text-center text-sm">
               <Link to="/login" className="text-primary font-semibold hover:underline">
