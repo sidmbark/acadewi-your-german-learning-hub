@@ -22,6 +22,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
+  // Helper function to get highest priority role
+  const getHighestPriorityRole = (roles: Array<{ role: string }>) => {
+    if (!roles || roles.length === 0) return 'etudiant';
+    
+    // Priority order: gestionnaire > professeur > etudiant
+    if (roles.some(r => r.role === 'gestionnaire')) return 'gestionnaire';
+    if (roles.some(r => r.role === 'professeur')) return 'professeur';
+    return 'etudiant';
+  };
+
   useEffect(() => {
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -30,15 +40,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Fetch user role
+          // Fetch user roles (can be multiple)
           setTimeout(async () => {
-            const { data: roleData } = await supabase
+            const { data: rolesData } = await supabase
               .from('user_roles')
               .select('role')
-              .eq('user_id', session.user.id)
-              .single();
+              .eq('user_id', session.user.id);
             
-            setUserRole(roleData?.role || 'etudiant');
+            const highestRole = getHighestPriorityRole(rolesData || []);
+            setUserRole(highestRole as 'etudiant' | 'professeur' | 'gestionnaire');
           }, 0);
         } else {
           setUserRole(null);
@@ -56,9 +66,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           .from('user_roles')
           .select('role')
           .eq('user_id', session.user.id)
-          .single()
           .then(({ data }) => {
-            setUserRole(data?.role || 'etudiant');
+            const highestRole = getHighestPriorityRole(data || []);
+            setUserRole(highestRole as 'etudiant' | 'professeur' | 'gestionnaire');
             setLoading(false);
           });
       } else {
@@ -78,14 +88,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (error) return { error };
       
-      // Navigate based on role
-      const { data: roleData } = await supabase
+      // Fetch all user roles and prioritize
+      const { data: rolesData } = await supabase
         .from('user_roles')
         .select('role')
-        .eq('user_id', data.user.id)
-        .single();
+        .eq('user_id', data.user.id);
       
-      const role = roleData?.role || 'etudiant';
+      const role = getHighestPriorityRole(rolesData || []);
       
       // Navigate based on role
       if (role === 'gestionnaire') {
