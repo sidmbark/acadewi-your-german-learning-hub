@@ -122,7 +122,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
+    // Clear local state first
+    setUser(null);
+    setSession(null);
+    setUserRole(null);
+    
+    // Sign out from Supabase
     await supabase.auth.signOut();
+    
+    // Navigate to login
     navigate('/login');
   };
 
