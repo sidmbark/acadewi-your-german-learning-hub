@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Users, Calendar, FileText, TrendingUp, Clock, Download } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BookOpen, Users, Calendar, FileText, TrendingUp, Clock, Download, RefreshCw } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -79,6 +80,7 @@ const Dashboard = () => {
     progressionMoyenne: 0,
   });
   const [loadingData, setLoadingData] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -96,11 +98,21 @@ const Dashboard = () => {
 
     if (user && userRole === 'etudiant') {
       fetchDashboardData();
+      
+      // Auto-refresh every 30 seconds
+      const interval = setInterval(() => {
+        fetchDashboardData();
+      }, 30000);
+      
+      return () => clearInterval(interval);
     }
   }, [user, userRole, loading, navigate]);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = async (showRefreshIndicator = false) => {
     try {
+      if (showRefreshIndicator) {
+        setRefreshing(true);
+      }
       // Récupérer le groupe de l'étudiant
       const { data: groupMember } = await supabase
         .from('group_members')
@@ -219,22 +231,24 @@ const Dashboard = () => {
         .eq('etudiant_id', user?.id)
         .eq('present', true);
 
-      // Compter les exercices complétés
+      // Compter les exercices soumis (au lieu de progression)
       const { count: exercicesCompleted } = await supabase
-        .from('progression')
+        .from('exercice_submissions')
         .select('*', { count: 'exact', head: true })
         .eq('etudiant_id', user?.id);
 
-      // Calculer la progression moyenne
-      const { data: progressionData } = await supabase
-        .from('progression')
-        .select('score')
-        .eq('etudiant_id', user?.id);
+      // Calculer la progression moyenne basée sur les notes des exercices corrigés
+      const { data: correctedSubmissions } = await supabase
+        .from('exercice_submissions')
+        .select('note')
+        .eq('etudiant_id', user?.id)
+        .eq('corrige', true)
+        .not('note', 'is', null);
 
       let progressionMoyenne = 0;
-      if (progressionData && progressionData.length > 0) {
-        const total = progressionData.reduce((acc, p) => acc + (Number(p.score) || 0), 0);
-        progressionMoyenne = Math.round(total / progressionData.length);
+      if (correctedSubmissions && correctedSubmissions.length > 0) {
+        const total = correctedSubmissions.reduce((acc, s) => acc + (Number(s.note) || 0), 0);
+        progressionMoyenne = Math.round((total / correctedSubmissions.length) * 5); // Convertir /20 en /100
       }
 
       // Calculer les heures d'apprentissage (estimation basée sur les présences)
@@ -248,6 +262,7 @@ const Dashboard = () => {
       });
 
       setLoadingData(false);
+      setRefreshing(false);
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
       toast({
@@ -256,6 +271,7 @@ const Dashboard = () => {
         variant: 'destructive',
       });
       setLoadingData(false);
+      setRefreshing(false);
     }
   };
 
@@ -333,8 +349,21 @@ const Dashboard = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Page Title */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Tableau de bord</h1>
-          <p className="text-muted-foreground">Vue d'ensemble de votre espace d'apprentissage</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-2">Tableau de bord</h1>
+              <p className="text-muted-foreground">Vue d'ensemble de votre espace d'apprentissage</p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchDashboardData(true)}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Actualiser
+            </Button>
+          </div>
           {groupeInfo && (
             <div className="mt-3">
               <Badge className="bg-primary text-primary-foreground text-sm">
