@@ -122,16 +122,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    // Clear local state first
-    setUser(null);
-    setSession(null);
-    setUserRole(null);
-    
-    // Sign out from Supabase
-    await supabase.auth.signOut();
-    
-    // Navigate to login
-    navigate('/login');
+    try {
+      // Sign out from Supabase first
+      await supabase.auth.signOut();
+      
+      // Then clear local state
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
+      
+      // Finally navigate to login
+      navigate('/login');
+    } catch (error) {
+      console.error('Error signing out:', error);
+      // Even if signOut fails, clear local state and navigate
+      setUser(null);
+      setSession(null);
+      setUserRole(null);
+      navigate('/login');
+    }
   };
 
   return (
