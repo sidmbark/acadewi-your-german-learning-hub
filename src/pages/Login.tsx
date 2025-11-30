@@ -7,7 +7,6 @@ import { Eye, EyeOff, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import logo from "@/assets/acadewi-logo.jpeg";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -52,7 +51,7 @@ const Login = () => {
       <div className="w-full max-w-md">
         <div className="text-center mb-8 animate-fade-in-up">
           <Link to="/" className="inline-flex items-center justify-center mb-4">
-            <img src={logo} alt="Acadewi Logo" className="h-20 w-auto" />
+            <span className="text-4xl font-bold text-gradient-primary">Acadewi</span>
           </Link>
           <p className="text-muted-foreground">Bienvenue ! Connectez-vous à votre compte</p>
         </div>

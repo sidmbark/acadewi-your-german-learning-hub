@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import logo from "@/assets/acadewi-logo.jpeg";
 
 const Register = () => {
   const [step, setStep] = useState(1);
@@ -166,7 +165,7 @@ const Register = () => {
       <div className="w-full max-w-2xl">
         <div className="text-center mb-8 animate-fade-in-up">
           <Link to="/" className="inline-flex items-center justify-center mb-4">
-            <img src={logo} alt="Acadewi Logo" className="h-20 w-auto" />
+            <span className="text-4xl font-bold text-gradient-primary">Acadewi</span>
           </Link>
           <p className="text-muted-foreground">Créez votre compte et commencez à apprendre l'allemand</p>
         </div>
