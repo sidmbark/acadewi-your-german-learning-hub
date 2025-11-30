@@ -39,10 +39,11 @@ export default function ProfDashboard() {
 
   const [docFormData, setDocFormData] = useState({
     titre: '',
-    fichier_url: '',
     type: 'PDF',
-    cours_id: '',
+    selectedGroupes: [] as string[],
   });
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const [exerciceFormData, setExerciceFormData] = useState({
     titre: '',
@@ -100,13 +101,17 @@ export default function ProfDashboard() {
       
       setCours(coursData || []);
 
-      // Fetch documents
+      // Fetch documents created by this professor
       const { data: docsData } = await supabase
         .from('documents')
         .select(`
           *,
-          cours(titre, groupes(nom))
+          document_groupe_access(
+            groupe_id,
+            groupes(nom, niveau)
+          )
         `)
+        .eq('professeur_id', user?.id)
         .order('date_upload', { ascending: false });
       
       setDocuments(docsData || []);
@@ -219,23 +224,100 @@ export default function ProfDashboard() {
   const handleCreateDocument = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    try {
-      const { error } = await supabase.from('documents').insert({
-        titre: docFormData.titre,
-        fichier_url: docFormData.fichier_url,
-        type: docFormData.type,
-        cours_id: docFormData.cours_id || null,
+    if (!selectedFile) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez sélectionner un fichier',
+        variant: 'destructive',
       });
+      return;
+    }
 
+    if (docFormData.selectedGroupes.length === 0) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez sélectionner au moins un groupe',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    try {
+      setUploadingFile(true);
+
+      // Upload file to Supabase Storage
+      const fileExt = selectedFile.name.split('.').pop();
+      const fileName = `${Math.random()}.${fileExt}`;
+      const filePath = `${user?.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, selectedFile);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      // Insert document into database
+      const { data: docData, error: docError } = await supabase
+        .from('documents')
+        .insert({
+          titre: docFormData.titre,
+          fichier_url: publicUrl,
+          type: docFormData.type,
+          professeur_id: user?.id,
+        })
+        .select()
+        .single();
+
+      if (docError) throw docError;
+
+      // Insert document-group access links
+      const accessLinks = docFormData.selectedGroupes.map(groupeId => ({
+        document_id: docData.id,
+        groupe_id: groupeId,
+      }));
+
+      const { error: accessError } = await supabase
+        .from('document_groupe_access')
+        .insert(accessLinks);
+
+      if (accessError) throw accessError;
+      
+      toast({
+        title: 'Succès',
+        description: 'Le document a été ajouté et partagé avec les groupes sélectionnés',
+      });
+      
+      setOpenDoc(false);
+      setDocFormData({ titre: '', type: 'PDF', selectedGroupes: [] });
+      setSelectedFile(null);
+      fetchData();
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const handleDeleteDocument = async (docId: string) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce document ?')) return;
+    
+    try {
+      const { error } = await supabase.from('documents').delete().eq('id', docId);
       if (error) throw error;
       
       toast({
         title: 'Succès',
-        description: 'Le document a été ajouté',
+        description: 'Le document a été supprimé',
       });
-      
-      setOpenDoc(false);
-      setDocFormData({ titre: '', fichier_url: '', type: 'PDF', cours_id: '' });
       fetchData();
     } catch (error: any) {
       toast({
@@ -642,33 +724,38 @@ export default function ProfDashboard() {
                     Déposer un Document
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>Ajouter un Document</DialogTitle>
                   </DialogHeader>
                   <form onSubmit={handleCreateDocument} className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="doc-titre">Titre *</Label>
+                      <Label htmlFor="doc-titre">Titre du document *</Label>
                       <Input
                         id="doc-titre"
                         value={docFormData.titre}
                         onChange={(e) => setDocFormData({ ...docFormData, titre: e.target.value })}
+                        placeholder="Ex: Vocabulaire - Leçon 5"
                         required
                       />
                     </div>
+                    
                     <div className="space-y-2">
-                      <Label htmlFor="doc-url">URL du fichier *</Label>
+                      <Label htmlFor="doc-file">Fichier *</Label>
                       <Input
-                        id="doc-url"
-                        type="url"
-                        value={docFormData.fichier_url}
-                        onChange={(e) => setDocFormData({ ...docFormData, fichier_url: e.target.value })}
-                        placeholder="https://..."
+                        id="doc-file"
+                        type="file"
+                        onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                        accept=".pdf,.doc,.docx,.mp3,.mp4,.wav,.mpeg"
                         required
                       />
+                      <p className="text-xs text-muted-foreground">
+                        Formats acceptés: PDF, DOC, DOCX, MP3, MP4, WAV
+                      </p>
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="doc-type">Type</Label>
+                      <Label htmlFor="doc-type">Type de document</Label>
                       <Select value={docFormData.type} onValueChange={(value) => setDocFormData({ ...docFormData, type: value })}>
                         <SelectTrigger>
                           <SelectValue />
@@ -677,48 +764,102 @@ export default function ProfDashboard() {
                           <SelectItem value="PDF">PDF</SelectItem>
                           <SelectItem value="Audio">Audio</SelectItem>
                           <SelectItem value="Video">Vidéo</SelectItem>
+                          <SelectItem value="Document">Document</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="doc-cours">Cours associé</Label>
-                      <Select value={docFormData.cours_id} onValueChange={(value) => setDocFormData({ ...docFormData, cours_id: value })}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Optionnel" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {cours.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.titre}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Label>Partager avec les groupes *</Label>
+                      <div className="border rounded-md p-3 space-y-2 max-h-40 overflow-y-auto">
+                        {groupes.map((groupe) => (
+                          <div key={groupe.id} className="flex items-center space-x-2">
+                            <input
+                              type="checkbox"
+                              id={`groupe-${groupe.id}`}
+                              checked={docFormData.selectedGroupes.includes(groupe.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setDocFormData({
+                                    ...docFormData,
+                                    selectedGroupes: [...docFormData.selectedGroupes, groupe.id],
+                                  });
+                                } else {
+                                  setDocFormData({
+                                    ...docFormData,
+                                    selectedGroupes: docFormData.selectedGroupes.filter(id => id !== groupe.id),
+                                  });
+                                }
+                              }}
+                              className="rounded border-gray-300"
+                            />
+                            <label
+                              htmlFor={`groupe-${groupe.id}`}
+                              className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                            >
+                              {groupe.nom} - {groupe.niveau}
+                            </label>
+                          </div>
+                        ))}
+                      </div>
                     </div>
+
                     <div className="flex justify-end gap-2">
-                      <Button type="button" variant="outline" onClick={() => setOpenDoc(false)}>
+                      <Button type="button" variant="outline" onClick={() => {
+                        setOpenDoc(false);
+                        setSelectedFile(null);
+                        setDocFormData({ titre: '', type: 'PDF', selectedGroupes: [] });
+                      }}>
                         Annuler
                       </Button>
-                      <Button type="submit">Ajouter</Button>
+                      <Button type="submit" disabled={uploadingFile}>
+                        {uploadingFile ? 'Upload en cours...' : 'Ajouter le document'}
+                      </Button>
                     </div>
                   </form>
                 </DialogContent>
               </Dialog>
             </div>
             <div className="grid gap-4">
-              {documents.map((doc: any) => (
-                <Card key={doc.id} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">{doc.titre}</h3>
-                      <p className="text-sm text-muted-foreground">{doc.type}</p>
+              {documents.length > 0 ? (
+                documents.map((doc: any) => (
+                  <Card key={doc.id} className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex-1">
+                        <h3 className="font-semibold">{doc.titre}</h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className="text-sm text-muted-foreground">{doc.type}</p>
+                          <span className="text-sm text-muted-foreground">•</span>
+                          <p className="text-sm text-muted-foreground">
+                            {new Date(doc.date_upload).toLocaleDateString('fr-FR')}
+                          </p>
+                        </div>
+                        {doc.document_groupe_access && doc.document_groupe_access.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {doc.document_groupe_access.map((access: any, idx: number) => (
+                              <span key={idx} className="text-xs px-2 py-1 bg-primary/10 text-primary rounded">
+                                {access.groupes?.nom}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => window.open(doc.fichier_url, '_blank')}>
+                          <Download className="h-4 w-4" />
+                        </Button>
+                        <Button variant="destructive" size="sm" onClick={() => handleDeleteDocument(doc.id)}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => window.open(doc.fichier_url, '_blank')}>
-                      Ouvrir
-                    </Button>
-                  </div>
-                </Card>
-              ))}
+                  </Card>
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  Aucun document ajouté pour le moment
+                </p>
+              )}
             </div>
           </TabsContent>
 

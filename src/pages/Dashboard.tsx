@@ -41,9 +41,6 @@ interface Document {
   fichier_url: string;
   type: string;
   date_upload: string;
-  cours: {
-    titre: string;
-  } | null;
 }
 
 const Dashboard = () => {
@@ -161,17 +158,27 @@ const Dashboard = () => {
 
       setExercices(exercicesData || []);
 
-      // Récupérer les documents disponibles
-      const { data: documentsData } = await supabase
-        .from('documents')
+      // Récupérer les documents accessibles au groupe de l'étudiant
+      const { data: documentAccess } = await supabase
+        .from('document_groupe_access')
         .select(`
-          *,
-          cours(titre)
+          document_id,
+          documents(
+            id,
+            titre,
+            fichier_url,
+            type,
+            date_upload
+          )
         `)
-        .order('date_upload', { ascending: false })
-        .limit(5);
+        .eq('groupe_id', groupMember.groupe_id);
 
-      setDocuments(documentsData || []);
+      const accessibleDocs = documentAccess
+        ?.map(access => access.documents)
+        .filter(doc => doc !== null)
+        .slice(0, 5) || [];
+
+      setDocuments(accessibleDocs as any);
 
       // Calculer les statistiques
       // Compter les cours suivis
@@ -485,9 +492,6 @@ const Dashboard = () => {
                         <h4 className="font-medium">{doc.titre}</h4>
                         <div className="flex items-center gap-3 mt-1">
                           <span className="text-xs text-muted-foreground">{doc.type}</span>
-                          {doc.cours && (
-                            <span className="text-xs text-muted-foreground">• {doc.cours.titre}</span>
-                          )}
                           <span className="text-xs text-muted-foreground">
                             • {new Date(doc.date_upload).toLocaleDateString('fr-FR')}
                           </span>
