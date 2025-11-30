@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-learning.jpg";
+import youssefPhoto from "@/assets/youssef-ouarrak.png";
 
 const Home = () => {
   const features = [
@@ -431,9 +432,11 @@ const Home = () => {
             <Card className="border-2 border-primary/20 hover:shadow-2xl transition-all duration-300">
               <CardContent className="p-8 md:p-12">
                 <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-5xl font-bold text-white shrink-0">
-                    YO
-                  </div>
+                  <img 
+                    src={youssefPhoto} 
+                    alt="Youssef Ouarrak - Professeur d'allemand" 
+                    className="w-32 h-32 rounded-full object-cover shrink-0 border-4 border-primary/20"
+                  />
                   
                   <div className="flex-1 text-center md:text-left space-y-4">
                     <div>
