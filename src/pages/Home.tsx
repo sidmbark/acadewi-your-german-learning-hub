@@ -9,6 +9,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-learning.jpg";
 import youssefPhoto from "@/assets/youssef-ouarrak.png";
+import { supabase } from "@/integrations/supabase/client";
 
 const Home = () => {
   const features = [
@@ -135,12 +136,26 @@ const Home = () => {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    toast.success("Message envoyé avec succès ! Nous vous recontacterons bientôt.");
-    setContactForm({ name: "", email: "", phone: "", message: "" });
-    setIsSubmitting(false);
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .insert({
+          nom: contactForm.name,
+          email: contactForm.email,
+          telephone: contactForm.phone,
+          message: contactForm.message,
+        });
+
+      if (error) throw error;
+
+      toast.success("Message envoyé avec succès ! Nous vous recontacterons bientôt.");
+      setContactForm({ name: "", email: "", phone: "", message: "" });
+    } catch (error) {
+      console.error('Erreur lors de l\'envoi du message:', error);
+      toast.error("Erreur lors de l'envoi du message. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleWhatsAppContact = () => {
