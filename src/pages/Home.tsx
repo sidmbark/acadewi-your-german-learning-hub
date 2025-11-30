@@ -256,7 +256,7 @@ const Home = () => {
                     ))}
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    <span className="font-semibold text-foreground">500+ étudiants</span> nous font confiance
+                    <span className="font-semibold text-foreground">De nombreux étudiants</span> nous font confiance
                   </p>
                 </div>
               </div>
@@ -278,7 +278,7 @@ const Home = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 space-y-4 animate-fade-in-up">
             <h2 className="text-4xl md:text-5xl font-bold">
-              Cours A1 <span className="text-gradient-primary">Détails</span>
+              Cours de A1 à C2 <span className="text-gradient-primary">Détails</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Votre parcours vers la maîtrise de l'allemand commence ici
@@ -393,8 +393,8 @@ const Home = () => {
               },
               {
                 step: "02",
-                title: "Rencontrez votre professeur",
-                description: "Faites connaissance avec votre professeur expert natif allemand et votre groupe d'apprentissage.",
+                title: "Rencontrez l'équipe pédagogique",
+                description: "Faites connaissance avec notre équipe pédagogique experte et votre groupe d'apprentissage.",
               },
               {
                 step: "03",
@@ -437,7 +437,7 @@ const Home = () => {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 space-y-4 animate-fade-in-up">
             <h2 className="text-4xl md:text-5xl font-bold">
-              Rencontrez votre <span className="text-gradient-primary">Professeur</span>
+              Équipe <span className="text-gradient-primary">Pédagogique</span>
             </h2>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
               Apprenez avec des éducateurs expérimentés et passionnés
@@ -461,19 +461,16 @@ const Home = () => {
                     </div>
                     
                     <p className="text-muted-foreground leading-relaxed">
-                      Fort de plus de 12 ans passés en Allemagne et de plus de 10 ans d'expérience dans l'enseignement de l'allemand, 
-                      Youssef Ouarrak a accompagné des centaines d'étudiants dans leur parcours d'apprentissage. Sa maîtrise approfondie 
-                      de la langue et de la culture allemandes, combinée à sa pédagogie adaptée au contexte marocain, fait de lui un 
-                      enseignant d'exception. Il prépare efficacement ses étudiants aux certifications Goethe de tous niveaux, en mettant 
-                      l'accent sur la pratique orale et la communication authentique.
+                      Fort de plus de 12 ans passés en Allemagne, Youssef Ouarrak a accompagné des centaines d'étudiants dans leur 
+                      parcours d'apprentissage. Sa maîtrise approfondie de la langue et de la culture allemandes, combinée à sa 
+                      pédagogie adaptée au contexte marocain, fait de lui un enseignant d'exception. Il prépare efficacement ses 
+                      étudiants aux certifications Goethe de tous niveaux, en mettant l'accent sur la pratique orale et la 
+                      communication authentique.
                     </p>
                     
                     <div className="flex flex-wrap gap-2 justify-center md:justify-start">
                       <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-semibold">
                         12+ ans en Allemagne
-                      </div>
-                      <div className="px-3 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-semibold">
-                        10+ ans d'enseignement
                       </div>
                       <div className="px-3 py-1 bg-success/10 text-success rounded-full text-sm font-semibold">
                         Certifications Goethe
@@ -664,22 +661,22 @@ const Home = () => {
                 <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent" />
               </div>
               <CardContent className="p-8 space-y-4 -mt-20 relative z-10">
-                <h3 className="text-2xl font-bold">Échanges Interculturels</h3>
+                <h3 className="text-2xl font-bold">Activités en Équipe</h3>
                 <p className="text-muted-foreground leading-relaxed">
-                  Participez à des sessions interactives avec des personnes venant d'Allemagne. Pratiquez la langue dans un contexte authentique et créez des connexions internationales.
+                  Des moments de partage et d'échange entre notre équipe pédagogique et nos étudiants pour créer un environnement d'apprentissage convivial et dynamique.
                 </p>
                 <ul className="space-y-2">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
-                    <span>Rencontres avec des natifs allemands</span>
+                    <span>Rencontres conviviales</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
-                    <span>Conversations authentiques</span>
+                    <span>Pratique collective</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
-                    <span>Networking international</span>
+                    <span>Esprit d'équipe</span>
                   </li>
                 </ul>
               </CardContent>
@@ -717,13 +714,6 @@ const Home = () => {
             </Card>
           </div>
           
-          <div className="text-center mt-12">
-            <Button asChild size="lg" variant="outline" className="text-lg">
-              <Link to="/register">
-                Rejoindre les workshops <Users className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
-          </div>
         </div>
       </section>
 
