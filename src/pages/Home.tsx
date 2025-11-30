@@ -452,6 +452,7 @@ const Home = () => {
                 <li><Link to="/login" className="hover:text-primary transition-colors">Connexion</Link></li>
                 <li><Link to="/register" className="hover:text-primary transition-colors">Inscription</Link></li>
                 <li><a href="#" className="hover:text-primary transition-colors">Centre d'aide</a></li>
+                <li><Link to="/gestionnaire/login" className="hover:text-primary transition-colors text-xs opacity-50">Espace Gestionnaire</Link></li>
               </ul>
             </div>
             <div>
