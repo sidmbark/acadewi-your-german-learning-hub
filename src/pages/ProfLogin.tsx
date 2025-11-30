@@ -15,22 +15,28 @@ const ProfLogin = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { signIn, user, userRole } = useAuth();
+  const { signIn, signOut, user, userRole } = useAuth();
 
   useEffect(() => {
-    if (user && userRole) {
-      if (userRole === 'professeur') {
-        navigate('/prof/dashboard');
-      } else if (userRole === 'gestionnaire') {
-        navigate('/gestionnaire/dashboard');
-      } else {
-        navigate('/dashboard');
-      }
+    // Only redirect professors who are already logged in
+    if (user && userRole === 'professeur') {
+      navigate('/prof/dashboard');
     }
   }, [user, userRole, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // If user is already logged in as another role, show warning
+    if (user && userRole && userRole !== 'professeur') {
+      toast({
+        title: "Déconnexion requise",
+        description: "Vous devez d'abord vous déconnecter de votre compte actuel",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     const { error } = await signIn(email, password);
@@ -66,6 +72,19 @@ const ProfLogin = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {user && userRole && userRole !== 'professeur' && (
+              <div className="mb-4 p-3 bg-warning/10 border border-warning/30 rounded-lg">
+                <p className="text-sm text-warning-foreground">
+                  Vous êtes déjà connecté en tant que {userRole}. 
+                  <button 
+                    onClick={() => signOut()}
+                    className="ml-2 underline font-medium"
+                  >
+                    Se déconnecter
+                  </button>
+                </p>
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
