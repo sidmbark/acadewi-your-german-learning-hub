@@ -61,12 +61,49 @@ export type Database = {
           },
         ]
       }
+      document_groupe_access: {
+        Row: {
+          created_at: string | null
+          document_id: string | null
+          groupe_id: string | null
+          id: string
+        }
+        Insert: {
+          created_at?: string | null
+          document_id?: string | null
+          groupe_id?: string | null
+          id?: string
+        }
+        Update: {
+          created_at?: string | null
+          document_id?: string | null
+          groupe_id?: string | null
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "document_groupe_access_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "document_groupe_access_groupe_id_fkey"
+            columns: ["groupe_id"]
+            isOneToOne: false
+            referencedRelation: "groupes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           cours_id: string | null
           date_upload: string | null
           fichier_url: string
           id: string
+          professeur_id: string | null
           taille: number | null
           titre: string
           type: string | null
@@ -76,6 +113,7 @@ export type Database = {
           date_upload?: string | null
           fichier_url: string
           id?: string
+          professeur_id?: string | null
           taille?: number | null
           titre: string
           type?: string | null
@@ -85,6 +123,7 @@ export type Database = {
           date_upload?: string | null
           fichier_url?: string
           id?: string
+          professeur_id?: string | null
           taille?: number | null
           titre?: string
           type?: string | null
@@ -95,6 +134,64 @@ export type Database = {
             columns: ["cours_id"]
             isOneToOne: false
             referencedRelation: "cours"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "documents_professeur_id_fkey"
+            columns: ["professeur_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exercice_submissions: {
+        Row: {
+          commentaire_prof: string | null
+          corrige: boolean | null
+          date_soumission: string | null
+          etudiant_id: string | null
+          exercice_id: string | null
+          fichiers_urls: string[] | null
+          id: string
+          note: number | null
+          reponses: Json
+        }
+        Insert: {
+          commentaire_prof?: string | null
+          corrige?: boolean | null
+          date_soumission?: string | null
+          etudiant_id?: string | null
+          exercice_id?: string | null
+          fichiers_urls?: string[] | null
+          id?: string
+          note?: number | null
+          reponses: Json
+        }
+        Update: {
+          commentaire_prof?: string | null
+          corrige?: boolean | null
+          date_soumission?: string | null
+          etudiant_id?: string | null
+          exercice_id?: string | null
+          fichiers_urls?: string[] | null
+          id?: string
+          note?: number | null
+          reponses?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exercice_submissions_etudiant_id_fkey"
+            columns: ["etudiant_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exercice_submissions_exercice_id_fkey"
+            columns: ["exercice_id"]
+            isOneToOne: false
+            referencedRelation: "exercices"
             referencedColumns: ["id"]
           },
         ]
