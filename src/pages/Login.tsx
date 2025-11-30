@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { BookOpen, Eye, EyeOff, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -14,21 +15,35 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn, user, userRole } = useAuth();
+
+  useEffect(() => {
+    if (user && userRole) {
+      // Redirect based on role
+      if (userRole === 'professeur') {
+        navigate('/prof/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
+    }
+  }, [user, userRole, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulation de connexion - À remplacer avec la vraie authentification
-    setTimeout(() => {
-      setIsLoading(false);
+    const { error } = await signIn(email, password);
+    
+    if (error) {
       toast({
-        title: "Connexion réussie",
-        description: "Bienvenue sur Acadewi !",
+        title: "Erreur de connexion",
+        description: error.message === "Invalid login credentials" 
+          ? "Email ou mot de passe incorrect" 
+          : error.message,
+        variant: "destructive",
       });
-      // Rediriger vers le dashboard approprié selon le rôle
-      navigate("/dashboard");
-    }, 1500);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -65,15 +80,7 @@ const Login = () => {
               </div>
 
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label htmlFor="password">Mot de passe</Label>
-                  <Link
-                    to="/forgot-password"
-                    className="text-sm text-primary hover:underline"
-                  >
-                    Mot de passe oublié ?
-                  </Link>
-                </div>
+                <Label htmlFor="password">Mot de passe</Label>
                 <div className="relative">
                   <Input
                     id="password"

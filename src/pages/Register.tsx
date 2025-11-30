@@ -7,6 +7,7 @@ import { BookOpen, Eye, EyeOff, Loader2, CheckCircle2, Upload } from "lucide-rea
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Register = () => {
   const [step, setStep] = useState(1);
@@ -17,12 +18,14 @@ const Register = () => {
     password: "",
     confirmPassword: "",
     phone: "",
+    address: "",
   });
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signUp } = useAuth();
 
   const progress = (step / 3) * 100;
 
@@ -73,17 +76,42 @@ const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!paymentProof) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez télécharger une preuve de paiement",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
-    // Simulation d'inscription - À remplacer avec la vraie API
-    setTimeout(() => {
-      setIsLoading(false);
+    const { error } = await signUp(formData.email, formData.password, {
+      nom: formData.lastName,
+      prenom: formData.firstName,
+      telephone: formData.phone,
+      adresse: formData.address,
+    });
+    
+    if (error) {
       toast({
-        title: "Inscription réussie !",
-        description: "Votre compte est en attente de validation. Vous recevrez un email de confirmation.",
+        title: "Erreur d'inscription",
+        description: error.message,
+        variant: "destructive",
       });
-      navigate("/login");
-    }, 2000);
+      setIsLoading(false);
+      return;
+    }
+    
+    toast({
+      title: "Inscription réussie !",
+      description: "Votre compte a été créé. Vous pouvez maintenant vous connecter.",
+    });
+    
+    setIsLoading(false);
+    navigate("/login");
   };
 
   return (
@@ -158,10 +186,21 @@ const Register = () => {
                       id="phone"
                       name="phone"
                       type="tel"
-                      placeholder="+33 6 12 34 56 78"
+                      placeholder="+212 6 12 34 56 78"
                       value={formData.phone}
                       onChange={handleInputChange}
                       required
+                      className="h-11"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="address">Adresse</Label>
+                    <Input
+                      id="address"
+                      name="address"
+                      placeholder="Votre adresse"
+                      value={formData.address}
+                      onChange={handleInputChange}
                       className="h-11"
                     />
                   </div>
