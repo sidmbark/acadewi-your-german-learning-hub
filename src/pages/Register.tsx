@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const Register = () => {
   const [step, setStep] = useState(1);
@@ -88,30 +89,75 @@ const Register = () => {
     
     setIsLoading(true);
 
-    const { error } = await signUp(formData.email, formData.password, {
-      nom: formData.lastName,
-      prenom: formData.firstName,
-      telephone: formData.phone,
-      adresse: formData.address,
-    });
-    
-    if (error) {
+    try {
+      // 1. Create user account
+      const { error: signUpError, user: newUser } = await signUp(formData.email, formData.password, {
+        nom: formData.lastName,
+        prenom: formData.firstName,
+        telephone: formData.phone,
+        adresse: formData.address,
+      });
+      
+      if (signUpError) {
+        toast({
+          title: "Erreur d'inscription",
+          description: signUpError.message,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Upload payment proof to Supabase Storage
+      if (newUser) {
+        const fileExt = paymentProof.name.split('.').pop();
+        const fileName = `${newUser.id}-${Date.now()}.${fileExt}`;
+        const filePath = `payment-proofs/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('documents')
+          .upload(filePath, paymentProof);
+
+        if (uploadError) {
+          console.error('Error uploading payment proof:', uploadError);
+          toast({
+            title: 'Attention',
+            description: 'Compte créé mais erreur lors de l\'upload de la preuve de paiement. Veuillez contacter l\'administrateur.',
+            variant: 'destructive',
+          });
+        } else {
+          // 3. Get public URL and update profile
+          const { data: { publicUrl } } = supabase.storage
+            .from('documents')
+            .getPublicUrl(filePath);
+
+          const { error: updateError } = await supabase
+            .from('profiles')
+            .update({ photo_paiement: publicUrl })
+            .eq('id', newUser.id);
+
+          if (updateError) {
+            console.error('Error updating profile with payment proof:', updateError);
+          }
+        }
+      }
+
       toast({
-        title: "Erreur d'inscription",
-        description: error.message,
+        title: "Inscription réussie !",
+        description: "Votre compte a été créé. Votre inscription sera validée par un administrateur.",
+      });
+      
+      setIsLoading(false);
+      navigate("/login");
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      toast({
+        title: "Erreur",
+        description: error.message || "Une erreur est survenue",
         variant: "destructive",
       });
       setIsLoading(false);
-      return;
     }
-    
-    toast({
-      title: "Inscription réussie !",
-      description: "Votre compte a été créé. Vous pouvez maintenant vous connecter.",
-    });
-    
-    setIsLoading(false);
-    navigate("/login");
   };
 
   return (

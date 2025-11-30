@@ -37,6 +37,9 @@ export default function ProfDashboard() {
     heure: '',
     lien_zoom: '',
     groupe_id: '',
+    recurrent: false,
+    nombre_seances: 1,
+    frequence: 'hebdomadaire' as 'hebdomadaire' | 'mensuel',
   });
 
   const [docFormData, setDocFormData] = useState({
@@ -178,48 +181,21 @@ export default function ProfDashboard() {
     }
 
     try {
-      let lienZoom = coursFormData.lien_zoom;
-
-      // Si c'est une création (pas une modification), créer un meeting Zoom
-      if (!editingCours) {
-        const startDateTime = `${coursFormData.date}T${coursFormData.heure}:00`;
-        const duration = 60; // 1 heure par défaut
-
-        console.log('Creating Zoom meeting for:', coursFormData.titre);
-        
-        const { data: zoomData, error: zoomError } = await supabase.functions.invoke('create-zoom-meeting', {
-          body: {
-            topic: coursFormData.titre,
-            start_time: startDateTime,
-            duration: duration,
-          },
-        });
-
-        if (zoomError) {
-          console.error('Zoom error:', zoomError);
-          throw new Error('Erreur lors de la création du meeting Zoom');
-        }
-
-        if (!zoomData?.join_url) {
-          throw new Error('URL Zoom non reçue');
-        }
-
-        lienZoom = zoomData.join_url;
-        console.log('Zoom meeting created:', zoomData.meeting_id);
-      }
-
-      const dataToSave = {
-        titre: coursFormData.titre,
-        description: coursFormData.description,
-        date: coursFormData.date,
-        heure: coursFormData.heure,
-        lien_zoom: lienZoom,
-        groupe_id: coursFormData.groupe_id,
-        professeur_id: user?.id,
-        statut: 'planifie',
-      };
-
       if (editingCours) {
+        // Mode édition : un seul cours
+        let lienZoom = coursFormData.lien_zoom;
+        
+        const dataToSave = {
+          titre: coursFormData.titre,
+          description: coursFormData.description,
+          date: coursFormData.date,
+          heure: coursFormData.heure,
+          lien_zoom: lienZoom,
+          groupe_id: coursFormData.groupe_id,
+          professeur_id: user?.id,
+          statut: 'planifie',
+        };
+
         const { error } = await supabase
           .from('cours')
           .update(dataToSave)
@@ -232,12 +208,61 @@ export default function ProfDashboard() {
           description: 'Le cours a été modifié avec succès',
         });
       } else {
-        const { error } = await supabase.from('cours').insert(dataToSave);
+        // Mode création : possibilité de créer plusieurs cours
+        const nombreCours = coursFormData.recurrent ? coursFormData.nombre_seances : 1;
+        const coursToCreate = [];
+        
+        for (let i = 0; i < nombreCours; i++) {
+          const currentDate = new Date(coursFormData.date);
+          
+          // Ajouter l'intervalle selon la fréquence
+          if (coursFormData.frequence === 'hebdomadaire') {
+            currentDate.setDate(currentDate.getDate() + (i * 7));
+          } else {
+            currentDate.setMonth(currentDate.getMonth() + i);
+          }
+          
+          const formattedDate = currentDate.toISOString().split('T')[0];
+          const startDateTime = `${formattedDate}T${coursFormData.heure}:00`;
+          const duration = 120; // 2 heures par défaut
+          
+          console.log(`Creating Zoom meeting ${i + 1}/${nombreCours}:`, coursFormData.titre);
+          
+          const { data: zoomData, error: zoomError } = await supabase.functions.invoke('create-zoom-meeting', {
+            body: {
+              topic: `${coursFormData.titre} - Séance ${i + 1}`,
+              start_time: startDateTime,
+              duration: duration,
+            },
+          });
+
+          if (zoomError) {
+            console.error('Zoom error:', zoomError);
+            throw new Error(`Erreur lors de la création du meeting Zoom pour la séance ${i + 1}`);
+          }
+
+          if (!zoomData?.join_url) {
+            throw new Error('URL Zoom non reçue');
+          }
+
+          coursToCreate.push({
+            titre: `${coursFormData.titre}${nombreCours > 1 ? ` - Séance ${i + 1}` : ''}`,
+            description: coursFormData.description,
+            date: formattedDate,
+            heure: coursFormData.heure,
+            lien_zoom: zoomData.join_url,
+            groupe_id: coursFormData.groupe_id,
+            professeur_id: user?.id,
+            statut: 'planifie',
+          });
+        }
+        
+        const { error } = await supabase.from('cours').insert(coursToCreate);
         if (error) throw error;
         
         toast({
           title: 'Succès',
-          description: 'Le cours et le meeting Zoom ont été créés avec succès',
+          description: `${nombreCours} cours ${nombreCours > 1 ? 'ont été créés' : 'a été créé'} avec succès`,
         });
       }
 
@@ -250,6 +275,9 @@ export default function ProfDashboard() {
         heure: '',
         lien_zoom: '',
         groupe_id: '',
+        recurrent: false,
+        nombre_seances: 1,
+        frequence: 'hebdomadaire',
       });
       fetchData();
     } catch (error: any) {
@@ -663,6 +691,65 @@ export default function ProfDashboard() {
                       </div>
                     )}
 
+                    {!editingCours && (
+                      <div className="space-y-4 border-t pt-4 mt-4">
+                        <div className="flex items-center justify-between">
+                          <Label htmlFor="recurrent" className="text-base font-semibold">Créer plusieurs séances</Label>
+                          <input
+                            id="recurrent"
+                            type="checkbox"
+                            checked={coursFormData.recurrent}
+                            onChange={(e) => setCoursFormData({ ...coursFormData, recurrent: e.target.checked })}
+                            className="h-5 w-5 cursor-pointer"
+                          />
+                        </div>
+
+                        {coursFormData.recurrent && (
+                          <>
+                            <div className="space-y-2">
+                              <Label htmlFor="nombre_seances">Nombre de séances *</Label>
+                              <Input
+                                id="nombre_seances"
+                                type="number"
+                                min="2"
+                                max="52"
+                                value={coursFormData.nombre_seances}
+                                onChange={(e) => setCoursFormData({ ...coursFormData, nombre_seances: parseInt(e.target.value) || 1 })}
+                                placeholder="Ex: 12"
+                              />
+                              <p className="text-xs text-muted-foreground">Entre 2 et 52 séances</p>
+                            </div>
+
+                            <div className="space-y-2">
+                              <Label htmlFor="frequence">Fréquence *</Label>
+                              <Select
+                                value={coursFormData.frequence}
+                                onValueChange={(value: 'hebdomadaire' | 'mensuel') => setCoursFormData({ ...coursFormData, frequence: value })}
+                              >
+                                <SelectTrigger id="frequence">
+                                  <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="hebdomadaire">Hebdomadaire (chaque semaine)</SelectItem>
+                                  <SelectItem value="mensuel">Mensuel (chaque mois)</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+
+                            <div className="bg-muted/50 p-3 rounded-lg">
+                              <p className="text-sm text-muted-foreground">
+                                <strong>Aperçu:</strong> {coursFormData.nombre_seances} séances seront créées,
+                                {coursFormData.frequence === 'hebdomadaire' ? ' une par semaine' : ' une par mois'},
+                                à partir du {coursFormData.date ? new Date(coursFormData.date).toLocaleDateString('fr-FR') : '...'}.
+                                <br />
+                                Un meeting Zoom unique sera généré pour chaque séance.
+                              </p>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+
                     <div className="flex justify-end gap-2 pt-4">
                       <Button type="button" variant="outline" onClick={() => {
                         setOpenCours(false);
@@ -730,6 +817,9 @@ export default function ProfDashboard() {
                               heure: c.heure,
                               lien_zoom: c.lien_zoom,
                               groupe_id: c.groupe_id,
+                              recurrent: false,
+                              nombre_seances: 1,
+                              frequence: 'hebdomadaire',
                             });
                             setOpenCours(true);
                           }}

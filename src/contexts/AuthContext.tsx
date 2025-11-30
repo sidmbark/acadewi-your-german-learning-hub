@@ -9,7 +9,7 @@ interface AuthContextType {
   userRole: 'etudiant' | 'professeur' | 'gestionnaire' | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: any }>;
-  signUp: (email: string, password: string, metadata: any) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, metadata: any) => Promise<{ error: any; user?: User | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const signUp = async (email: string, password: string, metadata: any) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -122,11 +122,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
       });
       
-      if (error) return { error };
+      if (error) return { error, user: null };
       
-      return { error: null };
+      return { error: null, user: data.user };
     } catch (error) {
-      return { error };
+      return { error, user: null };
     }
   };
 
