@@ -27,7 +27,7 @@ const GestionnaireLogin = () => {
       // Vérifier si le compte existe déjà
       const { data: existingUser } = await supabase.auth.signInWithPassword({
         email: 'admin@acadewi.com',
-        password: 'admin',
+        password: 'admin123',
       });
 
       if (existingUser.user) {
@@ -46,7 +46,7 @@ const GestionnaireLogin = () => {
       // Créer le compte admin
       const { data, error } = await supabase.auth.signUp({
         email: 'admin@acadewi.com',
-        password: 'admin',
+        password: 'admin123',
         options: {
           emailRedirectTo: `${window.location.origin}/`,
           data: {
@@ -95,11 +95,11 @@ const GestionnaireLogin = () => {
 
       toast({
         title: "Compte créé",
-        description: "Le compte admin a été créé avec succès. Vous pouvez maintenant vous connecter avec admin@acadewi.com / admin",
+        description: "Le compte admin a été créé avec succès. Vous pouvez maintenant vous connecter avec admin@acadewi.com / admin123",
       });
 
       setEmail('admin@acadewi.com');
-      setPassword('admin');
+      setPassword('admin123');
     } catch (error: any) {
       toast({
         title: "Erreur",
@@ -185,7 +185,7 @@ const GestionnaireLogin = () => {
             <ShieldCheck className="h-6 w-6 text-primary" />
             <h2 className="text-xl font-semibold">Espace Gestionnaire</h2>
           </div>
-          <p className="text-muted-foreground">Accès réservé aux administrateurs</p>
+          <p className="text-muted-foreground">Identifiants : admin@acadewi.com / admin123</p>
         </div>
 
         <Card className="border-2 shadow-xl animate-scale-in">

@@ -1,22 +1,58 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BookOpen, Users, Calendar, FileText, TrendingUp, Clock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+
+interface Cours {
+  id: string;
+  titre: string;
+  description: string;
+  date: string;
+  heure: string;
+  lien_zoom: string;
+  groupes: {
+    nom: string;
+    niveau: string;
+  };
+}
+
+interface Exercice {
+  id: string;
+  titre: string;
+  type: string;
+  duree: number;
+}
+
+interface Progression {
+  score: number;
+  tentatives: number;
+}
 
 const Dashboard = () => {
   const { user, userRole, signOut, loading } = useAuth();
   const navigate = useNavigate();
+  const { toast } = useToast();
+  
+  const [nextCours, setNextCours] = useState<Cours | null>(null);
+  const [exercices, setExercices] = useState<Exercice[]>([]);
+  const [stats, setStats] = useState({
+    coursCount: 0,
+    exercicesCompleted: 0,
+    heuresApprentissage: 0,
+    progressionMoyenne: 0,
+  });
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
-    // Redirect if not logged in
     if (!loading && !user) {
       navigate('/login');
       return;
     }
 
-    // Redirect based on role
     if (!loading && userRole) {
       if (userRole === 'professeur') {
         navigate('/prof/dashboard');
@@ -24,9 +60,133 @@ const Dashboard = () => {
         navigate('/gestionnaire/dashboard');
       }
     }
+
+    if (user && userRole === 'etudiant') {
+      fetchDashboardData();
+    }
   }, [user, userRole, loading, navigate]);
 
-  if (loading) {
+  const fetchDashboardData = async () => {
+    try {
+      // Récupérer le groupe de l'étudiant
+      const { data: groupMember } = await supabase
+        .from('group_members')
+        .select('groupe_id')
+        .eq('etudiant_id', user?.id)
+        .single();
+
+      if (!groupMember) {
+        setLoadingData(false);
+        return;
+      }
+
+      // Récupérer le prochain cours
+      const now = new Date();
+      const today = now.toISOString().split('T')[0];
+      const currentTime = now.toTimeString().split(' ')[0];
+
+      const { data: coursData } = await supabase
+        .from('cours')
+        .select(`
+          *,
+          groupes(nom, niveau)
+        `)
+        .eq('groupe_id', groupMember.groupe_id)
+        .gte('date', today)
+        .order('date', { ascending: true })
+        .order('heure', { ascending: true })
+        .limit(1);
+
+      if (coursData && coursData.length > 0) {
+        setNextCours(coursData[0] as Cours);
+      }
+
+      // Récupérer les exercices du groupe
+      const { data: exercicesData } = await supabase
+        .from('exercices')
+        .select('*')
+        .eq('groupe_id', groupMember.groupe_id)
+        .limit(3);
+
+      setExercices(exercicesData || []);
+
+      // Calculer les statistiques
+      // Compter les cours suivis
+      const { count: coursCount } = await supabase
+        .from('presences')
+        .select('*', { count: 'exact', head: true })
+        .eq('etudiant_id', user?.id)
+        .eq('present', true);
+
+      // Compter les exercices complétés
+      const { count: exercicesCompleted } = await supabase
+        .from('progression')
+        .select('*', { count: 'exact', head: true })
+        .eq('etudiant_id', user?.id);
+
+      // Calculer la progression moyenne
+      const { data: progressionData } = await supabase
+        .from('progression')
+        .select('score')
+        .eq('etudiant_id', user?.id);
+
+      let progressionMoyenne = 0;
+      if (progressionData && progressionData.length > 0) {
+        const total = progressionData.reduce((acc, p) => acc + (Number(p.score) || 0), 0);
+        progressionMoyenne = Math.round(total / progressionData.length);
+      }
+
+      // Calculer les heures d'apprentissage (estimation basée sur les présences)
+      const heuresApprentissage = (coursCount || 0) * 2; // Estimation de 2h par cours
+
+      setStats({
+        coursCount: coursCount || 0,
+        exercicesCompleted: exercicesCompleted || 0,
+        heuresApprentissage,
+        progressionMoyenne,
+      });
+
+      setLoadingData(false);
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les données du tableau de bord',
+        variant: 'destructive',
+      });
+      setLoadingData(false);
+    }
+  };
+
+  const canJoinCours = (coursDate: string, coursHeure: string) => {
+    const now = new Date();
+    const coursDateTime = new Date(`${coursDate}T${coursHeure}`);
+    const diffMinutes = (coursDateTime.getTime() - now.getTime()) / (1000 * 60);
+    
+    return diffMinutes <= 30 && diffMinutes >= -60;
+  };
+
+  const getTimeUntilCours = (coursDate: string, coursHeure: string) => {
+    const now = new Date();
+    const coursDateTime = new Date(`${coursDate}T${coursHeure}`);
+    const diffMinutes = (coursDateTime.getTime() - now.getTime()) / (1000 * 60);
+    
+    if (diffMinutes < 0) {
+      return 'En cours';
+    } else if (diffMinutes < 60) {
+      return `Dans ${Math.round(diffMinutes)}min`;
+    } else if (diffMinutes < 1440) {
+      return `Dans ${Math.round(diffMinutes / 60)}h`;
+    } else {
+      return `Dans ${Math.round(diffMinutes / 1440)} jours`;
+    }
+  };
+
+  const handleJoinZoom = (lienZoom: string) => {
+    window.open(lienZoom, '_blank', 'width=1200,height=800');
+  };
+
+  if (loading || loadingData) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -73,7 +233,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Cours suivis</p>
-                  <p className="text-3xl font-bold mt-1">12</p>
+                  <p className="text-3xl font-bold mt-1">{stats.coursCount}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center">
                   <BookOpen className="h-6 w-6 text-primary-foreground" />
@@ -87,7 +247,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Exercices complétés</p>
-                  <p className="text-3xl font-bold mt-1">48</p>
+                  <p className="text-3xl font-bold mt-1">{stats.exercicesCompleted}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-success to-success-light flex items-center justify-center">
                   <FileText className="h-6 w-6 text-success-foreground" />
@@ -101,7 +261,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Heures d'apprentissage</p>
-                  <p className="text-3xl font-bold mt-1">87</p>
+                  <p className="text-3xl font-bold mt-1">{stats.heuresApprentissage}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-secondary to-secondary-light flex items-center justify-center">
                   <Clock className="h-6 w-6 text-secondary-foreground" />
@@ -115,7 +275,7 @@ const Dashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Progression</p>
-                  <p className="text-3xl font-bold mt-1">78%</p>
+                  <p className="text-3xl font-bold mt-1">{stats.progressionMoyenne}%</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-warning to-warning flex items-center justify-center">
                   <TrendingUp className="h-6 w-6 text-warning-foreground" />
@@ -135,24 +295,46 @@ const Dashboard = () => {
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-4 border-l-4 border-primary">
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-lg">Allemand Niveau B1</h3>
-                  <span className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
-                    Dans 2h
-                  </span>
-                </div>
-                <p className="text-sm text-muted-foreground mb-3">Grammaire avancée et conversation</p>
-                <div className="flex items-center justify-between">
-                  <div className="text-sm">
-                    <p className="text-muted-foreground">Professeur: <span className="font-medium text-foreground">Dr. Schmidt</span></p>
-                    <p className="text-muted-foreground">Horaire: <span className="font-medium text-foreground">14:00 - 16:00</span></p>
+              {nextCours ? (
+                <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-4 border-l-4 border-primary">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-lg">{nextCours.titre}</h3>
+                    <span className="px-3 py-1 bg-primary text-primary-foreground rounded-full text-xs font-semibold">
+                      {getTimeUntilCours(nextCours.date, nextCours.heure)}
+                    </span>
                   </div>
-                  <Button variant="hero" size="sm">
-                    Rejoindre
-                  </Button>
+                  <p className="text-sm text-muted-foreground mb-3">{nextCours.description || 'Pas de description'}</p>
+                  <div className="flex items-center justify-between">
+                    <div className="text-sm">
+                      <p className="text-muted-foreground">
+                        Groupe: <span className="font-medium text-foreground">{nextCours.groupes?.nom} - {nextCours.groupes?.niveau}</span>
+                      </p>
+                      <p className="text-muted-foreground">
+                        Horaire: <span className="font-medium text-foreground">
+                          {new Date(nextCours.date).toLocaleDateString('fr-FR')} à {nextCours.heure}
+                        </span>
+                      </p>
+                    </div>
+                    {canJoinCours(nextCours.date, nextCours.heure) ? (
+                      <Button 
+                        variant="hero" 
+                        size="sm"
+                        onClick={() => handleJoinZoom(nextCours.lien_zoom)}
+                      >
+                        Rejoindre
+                      </Button>
+                    ) : (
+                      <Button variant="outline" size="sm" disabled>
+                        Bientôt disponible
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  Aucun cours planifié pour le moment
+                </p>
+              )}
             </CardContent>
           </Card>
 
@@ -161,34 +343,32 @@ const Dashboard = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-secondary" />
-                Exercices en attente
+                Exercices disponibles
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              {[
-                { title: "Conjugaison des verbes irréguliers", dueDate: "Aujourd'hui", difficulty: "Moyen" },
-                { title: "Compréhension écrite - Article", dueDate: "Demain", difficulty: "Facile" },
-                { title: "Expression orale - Débat", dueDate: "Dans 3 jours", difficulty: "Difficile" },
-              ].map((exercise, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
-                  <div className="flex-1">
-                    <h4 className="font-medium text-sm">{exercise.title}</h4>
-                    <div className="flex items-center gap-3 mt-1">
-                      <span className="text-xs text-muted-foreground">{exercise.dueDate}</span>
-                      <span className={`text-xs px-2 py-0.5 rounded ${
-                        exercise.difficulty === "Facile" ? "bg-success/20 text-success" :
-                        exercise.difficulty === "Moyen" ? "bg-warning/20 text-warning" :
-                        "bg-destructive/20 text-destructive"
-                      }`}>
-                        {exercise.difficulty}
-                      </span>
+              {exercices.length > 0 ? (
+                exercices.map((exercise) => (
+                  <div key={exercise.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+                    <div className="flex-1">
+                      <h4 className="font-medium text-sm">{exercise.titre}</h4>
+                      <div className="flex items-center gap-3 mt-1">
+                        <span className="text-xs text-muted-foreground">{exercise.type}</span>
+                        {exercise.duree && (
+                          <span className="text-xs text-muted-foreground">{exercise.duree} min</span>
+                        )}
+                      </div>
                     </div>
+                    <Button variant="outline" size="sm">
+                      Commencer
+                    </Button>
                   </div>
-                  <Button variant="outline" size="sm">
-                    Commencer
-                  </Button>
-                </div>
-              ))}
+                ))
+              ) : (
+                <p className="text-center text-muted-foreground py-8">
+                  Aucun exercice disponible pour le moment
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -206,23 +386,19 @@ const Dashboard = () => {
                 </div>
               </Link>
             </Button>
-            <Button variant="outline" className="h-20 justify-start gap-4" asChild>
-              <Link to="/exercises">
-                <FileText className="h-6 w-6" />
-                <div className="text-left">
-                  <div className="font-semibold">Exercices</div>
-                  <div className="text-xs text-muted-foreground">Bibliothèque complète</div>
-                </div>
-              </Link>
+            <Button variant="outline" className="h-20 justify-start gap-4">
+              <FileText className="h-6 w-6" />
+              <div className="text-left">
+                <div className="font-semibold">Exercices</div>
+                <div className="text-xs text-muted-foreground">Bibliothèque complète</div>
+              </div>
             </Button>
-            <Button variant="outline" className="h-20 justify-start gap-4" asChild>
-              <Link to="/progression">
-                <TrendingUp className="h-6 w-6" />
-                <div className="text-left">
-                  <div className="font-semibold">Progression</div>
-                  <div className="text-xs text-muted-foreground">Suivre vos résultats</div>
-                </div>
-              </Link>
+            <Button variant="outline" className="h-20 justify-start gap-4">
+              <TrendingUp className="h-6 w-6" />
+              <div className="text-left">
+                <div className="font-semibold">Progression</div>
+                <div className="text-xs text-muted-foreground">Suivre vos résultats</div>
+              </div>
             </Button>
           </div>
         </div>
