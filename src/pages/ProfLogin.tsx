@@ -21,6 +21,8 @@ const ProfLogin = () => {
     if (user && userRole) {
       if (userRole === 'professeur') {
         navigate('/prof/dashboard');
+      } else if (userRole === 'gestionnaire') {
+        navigate('/gestionnaire/dashboard');
       } else {
         navigate('/dashboard');
       }

@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BookOpen, Users, Calendar, FileText, TrendingUp, Clock } from "lucide-react";
+import { BookOpen, Users, Calendar, FileText, TrendingUp, Clock, Download } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -33,6 +33,17 @@ interface Progression {
   tentatives: number;
 }
 
+interface Document {
+  id: string;
+  titre: string;
+  fichier_url: string;
+  type: string;
+  date_upload: string;
+  cours: {
+    titre: string;
+  } | null;
+}
+
 const Dashboard = () => {
   const { user, userRole, signOut, loading } = useAuth();
   const navigate = useNavigate();
@@ -40,6 +51,7 @@ const Dashboard = () => {
   
   const [nextCours, setNextCours] = useState<Cours | null>(null);
   const [exercices, setExercices] = useState<Exercice[]>([]);
+  const [documents, setDocuments] = useState<Document[]>([]);
   const [groupeInfo, setGroupeInfo] = useState<{ nom: string; niveau: string } | null>(null);
   const [stats, setStats] = useState({
     coursCount: 0,
@@ -93,10 +105,9 @@ const Dashboard = () => {
         setGroupeInfo(groupData);
       }
 
-      // Récupérer le prochain cours
+      // Récupérer le prochain cours (futur uniquement)
       const now = new Date();
       const today = now.toISOString().split('T')[0];
-      const currentTime = now.toTimeString().split(' ')[0];
 
       const { data: coursData } = await supabase
         .from('cours')
@@ -107,11 +118,16 @@ const Dashboard = () => {
         .eq('groupe_id', groupMember.groupe_id)
         .gte('date', today)
         .order('date', { ascending: true })
-        .order('heure', { ascending: true })
-        .limit(1);
+        .order('heure', { ascending: true });
 
-      if (coursData && coursData.length > 0) {
-        setNextCours(coursData[0] as Cours);
+      // Filter out past courses for today
+      const futureCours = coursData?.filter(c => {
+        const coursDateTime = new Date(`${c.date}T${c.heure}`);
+        return coursDateTime.getTime() > now.getTime();
+      });
+
+      if (futureCours && futureCours.length > 0) {
+        setNextCours(futureCours[0] as Cours);
       }
 
       // Récupérer les exercices du groupe
@@ -122,6 +138,18 @@ const Dashboard = () => {
         .limit(3);
 
       setExercices(exercicesData || []);
+
+      // Récupérer les documents disponibles
+      const { data: documentsData } = await supabase
+        .from('documents')
+        .select(`
+          *,
+          cours(titre)
+        `)
+        .order('date_upload', { ascending: false })
+        .limit(5);
+
+      setDocuments(documentsData || []);
 
       // Calculer les statistiques
       // Compter les cours suivis
@@ -305,7 +333,7 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-2 gap-6 mb-6">
           {/* Prochain cours */}
           <Card className="border-2">
             <CardHeader>
@@ -392,6 +420,54 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Documents disponibles */}
+        <Card className="border-2 mb-8">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Documents disponibles
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {documents.length > 0 ? (
+              <div className="space-y-3">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
+                    <div className="flex items-center gap-3 flex-1">
+                      <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                        <FileText className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <h4 className="font-medium">{doc.titre}</h4>
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-xs text-muted-foreground">{doc.type}</span>
+                          {doc.cours && (
+                            <span className="text-xs text-muted-foreground">• {doc.cours.titre}</span>
+                          )}
+                          <span className="text-xs text-muted-foreground">
+                            • {new Date(doc.date_upload).toLocaleDateString('fr-FR')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => window.open(doc.fichier_url, '_blank')}
+                    >
+                      Télécharger
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">
+                Aucun document disponible pour le moment
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Quick Actions */}
         <div className="mt-8">
