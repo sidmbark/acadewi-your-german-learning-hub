@@ -29,6 +29,11 @@ interface Groupe {
   niveau: string;
   couleur: string;
   horaire: string;
+  professeur_id?: string;
+  profiles?: {
+    nom: string;
+    prenom: string;
+  };
   studentCount?: number;
   students?: Array<{
     id: string;
@@ -49,8 +54,10 @@ const GestionnaireDashboard = () => {
   const { toast } = useToast();
   const [pendingProfiles, setPendingProfiles] = useState<Profile[]>([]);
   const [groupes, setGroupes] = useState<Groupe[]>([]);
+  const [professors, setProfessors] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [selectedGroupeId, setSelectedGroupeId] = useState<string>('');
+  const [selectedProfId, setSelectedProfId] = useState<string>('');
   const [loading, setLoading] = useState(true);
   
   // Form state for creating a new group
@@ -74,6 +81,7 @@ const GestionnaireDashboard = () => {
 
     fetchPendingProfiles();
     fetchGroupes();
+    fetchProfessors();
   }, [user, userRole, navigate]);
 
   const fetchPendingProfiles = async () => {
@@ -98,6 +106,32 @@ const GestionnaireDashboard = () => {
     }
   };
 
+  const fetchProfessors = async () => {
+    try {
+      // Get all users with professor role
+      const { data: profRoles, error: roleError } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'professeur');
+
+      if (roleError) throw roleError;
+
+      if (profRoles && profRoles.length > 0) {
+        const profIds = profRoles.map(r => r.user_id);
+        
+        const { data: profProfiles, error: profileError } = await supabase
+          .from('profiles')
+          .select('*')
+          .in('id', profIds);
+
+        if (profileError) throw profileError;
+        setProfessors(profProfiles || []);
+      }
+    } catch (error) {
+      console.error('Error fetching professors:', error);
+    }
+  };
+
   const fetchGroupes = async () => {
     try {
       const { data, error } = await supabase
@@ -110,6 +144,17 @@ const GestionnaireDashboard = () => {
       // Fetch student count and students for each group
       const groupesWithStudents = await Promise.all(
         (data || []).map(async (groupe) => {
+          // Fetch professor profile if assigned
+          let professorProfile = null;
+          if (groupe.professeur_id) {
+            const { data: profData } = await supabase
+              .from('profiles')
+              .select('nom, prenom')
+              .eq('id', groupe.professeur_id)
+              .single();
+            professorProfile = profData;
+          }
+          
           const { data: members } = await supabase
             .from('group_members')
             .select('etudiant_id, date_assignation')
@@ -132,6 +177,7 @@ const GestionnaireDashboard = () => {
           
           return {
             ...groupe,
+            profiles: professorProfile,
             studentCount: students.length,
             students,
           };
@@ -538,6 +584,7 @@ const GestionnaireDashboard = () => {
                   <TableRow>
                     <TableHead>Nom</TableHead>
                     <TableHead>Niveau</TableHead>
+                    <TableHead>Professeur</TableHead>
                     <TableHead>Horaire</TableHead>
                     <TableHead>Étudiants</TableHead>
                     <TableHead>Couleur</TableHead>
@@ -550,6 +597,15 @@ const GestionnaireDashboard = () => {
                       <TableCell className="font-medium">{groupe.nom}</TableCell>
                       <TableCell>
                         <Badge className="bg-primary text-primary-foreground">{groupe.niveau}</Badge>
+                      </TableCell>
+                      <TableCell className="text-sm">
+                        {groupe.profiles ? (
+                          <span className="font-medium">
+                            {groupe.profiles.prenom} {groupe.profiles.nom}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground italic">Non assigné</span>
+                        )}
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {groupe.horaire || 'Non défini'}
@@ -585,6 +641,62 @@ const GestionnaireDashboard = () => {
                             </DialogHeader>
                             
                             <div className="space-y-6 py-4">
+                              {/* Affecter un professeur */}
+                              <div className="space-y-3 pb-4 border-b">
+                                <h4 className="font-semibold text-sm">Professeur assigné</h4>
+                                <div className="space-y-2">
+                                  <Label>Sélectionner un professeur</Label>
+                                  <div className="flex gap-2">
+                                    <Select
+                                      value={selectedProfId || groupe.professeur_id || ''}
+                                      onValueChange={setSelectedProfId}
+                                    >
+                                      <SelectTrigger className="flex-1">
+                                        <SelectValue placeholder="Choisir un professeur" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {professors.map((prof) => (
+                                          <SelectItem key={prof.id} value={prof.id}>
+                                            {prof.prenom} {prof.nom}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <Button
+                                      onClick={async () => {
+                                        if (!selectedProfId) return;
+                                        try {
+                                          const { error } = await supabase
+                                            .from('groupes')
+                                            .update({ professeur_id: selectedProfId })
+                                            .eq('id', groupe.id);
+                                          
+                                          if (error) throw error;
+                                          
+                                          toast({
+                                            title: 'Professeur assigné',
+                                            description: 'Le professeur a été assigné au groupe avec succès',
+                                          });
+                                          
+                                          fetchGroupes();
+                                          setSelectedProfId('');
+                                        } catch (error) {
+                                          console.error('Error assigning professor:', error);
+                                          toast({
+                                            title: 'Erreur',
+                                            description: 'Impossible d\'assigner le professeur',
+                                            variant: 'destructive',
+                                          });
+                                        }
+                                      }}
+                                      disabled={!selectedProfId}
+                                    >
+                                      Assigner
+                                    </Button>
+                                  </div>
+                                </div>
+                              </div>
+                              
                               {/* Liste des étudiants actuels */}
                               {groupe.students && groupe.students.length > 0 && (
                                 <div className="space-y-3">

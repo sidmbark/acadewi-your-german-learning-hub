@@ -119,6 +119,13 @@ const ProfLogin = () => {
                   "Se connecter"
                 )}
               </Button>
+
+              <div className="text-center text-sm text-muted-foreground">
+                Vous n'avez pas de compte ?{" "}
+                <Link to="/prof/register" className="text-primary hover:underline font-medium">
+                  S'inscrire
+                </Link>
+              </div>
             </form>
           </CardContent>
         </Card>
