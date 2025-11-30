@@ -9,6 +9,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-learning.jpg";
 import youssefPhoto from "@/assets/youssef-ouarrak.png";
+import logo from "@/assets/acadewi-logo.jpeg";
 import { supabase } from "@/integrations/supabase/client";
 
 const Home = () => {
@@ -168,10 +169,9 @@ const Home = () => {
       {/* Header/Navbar */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 flex h-16 items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BookOpen className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold text-gradient-primary">Acadewi</span>
-          </div>
+          <Link to="/" className="flex items-center gap-2">
+            <img src={logo} alt="Acadewi Logo" className="h-12 w-auto" />
+          </Link>
           <nav className="hidden md:flex gap-8">
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
               Fonctionnalités
