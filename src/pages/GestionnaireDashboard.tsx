@@ -29,6 +29,13 @@ interface Groupe {
   niveau: string;
   couleur: string;
   horaire: string;
+  studentCount?: number;
+  students?: Array<{
+    id: string;
+    nom: string;
+    prenom: string;
+    date_inscription: string;
+  }>;
 }
 
 interface GroupMember {
@@ -99,7 +106,39 @@ const GestionnaireDashboard = () => {
         .order('niveau', { ascending: true });
 
       if (error) throw error;
-      setGroupes(data || []);
+      
+      // Fetch student count and students for each group
+      const groupesWithStudents = await Promise.all(
+        (data || []).map(async (groupe) => {
+          const { data: members } = await supabase
+            .from('group_members')
+            .select('etudiant_id, date_assignation')
+            .eq('groupe_id', groupe.id);
+          
+          // Get profile data for each member
+          const studentsData = await Promise.all(
+            (members || []).map(async (member) => {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('id, nom, prenom, date_inscription')
+                .eq('id', member.etudiant_id)
+                .single();
+              
+              return profile;
+            })
+          );
+          
+          const students = studentsData.filter(s => s !== null);
+          
+          return {
+            ...groupe,
+            studentCount: students.length,
+            students,
+          };
+        })
+      );
+      
+      setGroupes(groupesWithStudents);
     } catch (error) {
       console.error('Error fetching groupes:', error);
     }
@@ -203,20 +242,37 @@ const GestionnaireDashboard = () => {
     }
 
     try {
-      const { error } = await supabase.from('group_members').insert({
+      // Insert into group_members
+      const { error: memberError } = await supabase.from('group_members').insert({
         etudiant_id: selectedStudent,
         groupe_id: selectedGroupeId,
       });
 
-      if (error) throw error;
+      if (memberError) throw memberError;
+
+      // Get group name for notification
+      const groupe = groupes.find(g => g.id === selectedGroupeId);
+      
+      // Create notification for the student
+      const { error: notifError } = await supabase.from('notifications').insert({
+        user_id: selectedStudent,
+        type: 'affectation_groupe',
+        message: `Vous avez été affecté au groupe ${groupe?.nom} (${groupe?.niveau})`,
+        lu: false,
+      });
+
+      if (notifError) {
+        console.error('Error creating notification:', notifError);
+      }
 
       toast({
         title: 'Étudiant affecté',
-        description: 'L\'étudiant a été affecté au groupe avec succès',
+        description: 'L\'étudiant a été affecté au groupe et notifié avec succès',
       });
 
       setSelectedStudent(null);
       setSelectedGroupeId('');
+      fetchGroupes(); // Refresh to update student counts
     } catch (error) {
       console.error('Error assigning to group:', error);
       toast({
@@ -483,6 +539,7 @@ const GestionnaireDashboard = () => {
                     <TableHead>Nom</TableHead>
                     <TableHead>Niveau</TableHead>
                     <TableHead>Horaire</TableHead>
+                    <TableHead>Étudiants</TableHead>
                     <TableHead>Couleur</TableHead>
                     <TableHead>Actions</TableHead>
                   </TableRow>
@@ -496,6 +553,11 @@ const GestionnaireDashboard = () => {
                       </TableCell>
                       <TableCell className="text-muted-foreground">
                         {groupe.horaire || 'Non défini'}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="outline">
+                          {groupe.studentCount || 0} étudiant{(groupe.studentCount || 0) > 1 ? 's' : ''}
+                        </Badge>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
@@ -514,40 +576,69 @@ const GestionnaireDashboard = () => {
                               Affecter
                             </Button>
                           </DialogTrigger>
-                          <DialogContent>
+                          <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
                             <DialogHeader>
-                              <DialogTitle>Affecter un étudiant</DialogTitle>
+                              <DialogTitle>Gérer le groupe {groupe.nom}</DialogTitle>
                               <DialogDescription>
-                                Sélectionnez un étudiant à affecter au groupe {groupe.nom}
+                                Total: {groupe.studentCount || 0} étudiant{(groupe.studentCount || 0) > 1 ? 's' : ''} dans ce groupe
                               </DialogDescription>
                             </DialogHeader>
-                            <div className="space-y-4 py-4">
-                              <div className="space-y-2">
-                                <Label>Étudiant</Label>
-                                <Select
-                                  value={selectedStudent || ''}
-                                  onValueChange={setSelectedStudent}
-                                >
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Sélectionner un étudiant" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {pendingProfiles.map((profile) => (
-                                      <SelectItem key={profile.id} value={profile.id}>
-                                        {profile.prenom} {profile.nom}
-                                      </SelectItem>
+                            
+                            <div className="space-y-6 py-4">
+                              {/* Liste des étudiants actuels */}
+                              {groupe.students && groupe.students.length > 0 && (
+                                <div className="space-y-3">
+                                  <h4 className="font-semibold text-sm">Étudiants affectés</h4>
+                                  <div className="border rounded-lg divide-y max-h-60 overflow-y-auto">
+                                    {groupe.students.map((student) => (
+                                      <div key={student.id} className="p-3 flex items-center justify-between hover:bg-muted/50">
+                                        <div>
+                                          <p className="font-medium">{student.prenom} {student.nom}</p>
+                                          <p className="text-xs text-muted-foreground">
+                                            Inscrit le {new Date(student.date_inscription).toLocaleDateString('fr-FR')}
+                                          </p>
+                                        </div>
+                                      </div>
                                     ))}
-                                  </SelectContent>
-                                </Select>
+                                  </div>
+                                </div>
+                              )}
+                              
+                              {/* Affecter un nouvel étudiant */}
+                              <div className="space-y-3 pt-4 border-t">
+                                <h4 className="font-semibold text-sm">Affecter un nouvel étudiant</h4>
+                                <div className="space-y-2">
+                                  <Label>Étudiant</Label>
+                                  <Select
+                                    value={selectedStudent || ''}
+                                    onValueChange={setSelectedStudent}
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Sélectionner un étudiant" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {pendingProfiles
+                                        .filter(profile => profile.statut === 'valide')
+                                        .map((profile) => (
+                                          <SelectItem key={profile.id} value={profile.id}>
+                                            {profile.prenom} {profile.nom} - Inscrit le {new Date(profile.date_inscription).toLocaleDateString('fr-FR')}
+                                          </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
                               </div>
                             </div>
+                            
                             <DialogFooter>
                               <Button
                                 onClick={() => {
                                   setSelectedGroupeId(groupe.id);
                                   handleAssignToGroup();
                                 }}
+                                disabled={!selectedStudent}
                               >
+                                <UserPlus className="h-4 w-4 mr-2" />
                                 Affecter au groupe
                               </Button>
                             </DialogFooter>
