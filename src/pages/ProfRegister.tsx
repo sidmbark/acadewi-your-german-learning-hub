@@ -66,27 +66,6 @@ const ProfRegister = () => {
       if (authError) throw authError;
 
       if (authData.user) {
-        // Delete the default etudiant role and insert professeur role
-        const { error: deleteError } = await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', authData.user.id);
-
-        if (deleteError) {
-          console.error('Error deleting default role:', deleteError);
-        }
-
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({ 
-            user_id: authData.user.id,
-            role: 'professeur' 
-          });
-
-        if (roleError) {
-          console.error('Error inserting professeur role:', roleError);
-        }
-
         toast({
           title: "Inscription réussie",
           description: "Votre compte professeur a été créé. En attente de validation par le gestionnaire.",
