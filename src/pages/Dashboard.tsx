@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CoursDetailDialog } from '@/components/CoursDetailDialog';
+import { ExerciceDetailDialog } from '@/components/ExerciceDetailDialog';
 
 interface Cours {
   id: string;
@@ -28,6 +29,20 @@ interface Exercice {
   titre: string;
   type: string;
   duree: number;
+  questions: any;
+}
+
+interface ExerciceSubmission {
+  id: string;
+  exercice_id: string;
+  date_soumission: string;
+  corrige: boolean;
+  note: number | null;
+  commentaire_prof: string | null;
+  exercices: {
+    titre: string;
+    type: string;
+  };
 }
 
 interface Progression {
@@ -52,6 +67,9 @@ const Dashboard = () => {
   const [selectedCours, setSelectedCours] = useState<Cours | null>(null);
   const [coursDialogOpen, setCoursDialogOpen] = useState(false);
   const [exercices, setExercices] = useState<Exercice[]>([]);
+  const [selectedExercice, setSelectedExercice] = useState<Exercice | null>(null);
+  const [exerciceDialogOpen, setExerciceDialogOpen] = useState(false);
+  const [submissions, setSubmissions] = useState<ExerciceSubmission[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [groupeInfo, setGroupeInfo] = useState<{ nom: string; niveau: string } | null>(null);
   const [stats, setStats] = useState({
@@ -158,6 +176,19 @@ const Dashboard = () => {
 
       setExercices(exercicesData || []);
 
+      // Récupérer les soumissions de l'étudiant
+      const { data: submissionsData } = await supabase
+        .from('exercice_submissions')
+        .select(`
+          *,
+          exercices(titre, type)
+        `)
+        .eq('etudiant_id', user?.id)
+        .order('date_soumission', { ascending: false })
+        .limit(5);
+
+      setSubmissions(submissionsData || []);
+
       // Récupérer les documents accessibles au groupe de l'étudiant
       const { data: documentAccess } = await supabase
         .from('document_groupe_access')
@@ -259,6 +290,11 @@ const Dashboard = () => {
   const handleCoursClick = (cours: Cours) => {
     setSelectedCours(cours);
     setCoursDialogOpen(true);
+  };
+
+  const handleExerciceClick = (exercice: Exercice) => {
+    setSelectedExercice(exercice);
+    setExerciceDialogOpen(true);
   };
 
   if (loading || loadingData) {
@@ -457,7 +493,11 @@ const Dashboard = () => {
                         )}
                       </div>
                     </div>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleExerciceClick(exercise)}
+                    >
                       Commencer
                     </Button>
                   </div>
@@ -470,6 +510,54 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Mes soumissions */}
+        <Card className="border-2 mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="h-5 w-5 text-success" />
+              Mes soumissions d'exercices
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {submissions.length > 0 ? (
+              <div className="space-y-3">
+                {submissions.map((submission) => (
+                  <div key={submission.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors border">
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-base mb-1">{submission.exercices.titre}</h4>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>{submission.exercices.type}</span>
+                        <span>Soumis le {new Date(submission.date_soumission).toLocaleDateString('fr-FR')}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {submission.corrige ? (
+                        <div className="text-right">
+                          <Badge className="bg-success text-success-foreground mb-1">Corrigé</Badge>
+                          {submission.note !== null && (
+                            <p className="text-lg font-bold">{submission.note}/20</p>
+                          )}
+                          {submission.commentaire_prof && (
+                            <p className="text-xs text-muted-foreground mt-1 max-w-xs">
+                              {submission.commentaire_prof}
+                            </p>
+                          )}
+                        </div>
+                      ) : (
+                        <Badge className="bg-warning text-warning-foreground">En attente</Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">
+                Aucune soumission pour le moment
+              </p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Documents disponibles */}
         <Card className="border-2 mb-8">
@@ -516,13 +604,21 @@ const Dashboard = () => {
           </CardContent>
         </Card>
 
-        {/* Cours Detail Dialog */}
+        {/* Dialogs */}
         <CoursDetailDialog
           cours={selectedCours}
           open={coursDialogOpen}
           onOpenChange={setCoursDialogOpen}
           canJoin={selectedCours ? canJoinCours(selectedCours.date, selectedCours.heure) : false}
           onJoinZoom={() => selectedCours && handleJoinZoom(selectedCours.lien_zoom)}
+        />
+
+        <ExerciceDetailDialog
+          exercice={selectedExercice}
+          open={exerciceDialogOpen}
+          onOpenChange={setExerciceDialogOpen}
+          userId={user?.id || ''}
+          onSubmitSuccess={fetchDashboardData}
         />
 
         {/* Quick Actions */}
