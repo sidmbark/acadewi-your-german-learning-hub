@@ -66,6 +66,19 @@ const ProfRegister = () => {
       if (authError) throw authError;
 
       if (authData.user) {
+        try {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .update({ statut: 'en_attente_prof' })
+            .eq('id', authData.user.id);
+
+          if (profileError) {
+            console.error('Error updating professor profile status:', profileError);
+          }
+        } catch (err) {
+          console.error('Unexpected error updating professor profile status:', err);
+        }
+
         toast({
           title: "Inscription réussie",
           description: "Votre compte professeur a été créé. En attente de validation par le gestionnaire.",

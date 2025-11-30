@@ -126,25 +126,14 @@ const GestionnaireDashboard = () => {
 
   const fetchProfessors = async () => {
     try {
-      // Get all users with professor role
-      const { data: profRoles, error: roleError } = await supabase
-        .from('user_roles')
-        .select('user_id')
-        .eq('role', 'professeur');
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .or('statut.eq.en_attente_prof,statut.eq.valide_prof,statut.eq.refuse_prof')
+        .order('date_inscription', { ascending: false });
 
-      if (roleError) throw roleError;
-
-      if (profRoles && profRoles.length > 0) {
-        const profIds = profRoles.map(r => r.user_id);
-        
-        const { data: profProfiles, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .in('id', profIds);
-
-        if (profileError) throw profileError;
-        setProfessors(profProfiles || []);
-      }
+      if (error) throw error;
+      setProfessors(data || []);
     } catch (error) {
       console.error('Error fetching professors:', error);
     }
@@ -208,7 +197,7 @@ const GestionnaireDashboard = () => {
     }
   };
 
-  const handleValidateProfile = async (profileId: string) => {
+  const handleValidateStudent = async (profileId: string) => {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -219,21 +208,22 @@ const GestionnaireDashboard = () => {
 
       toast({
         title: 'Inscription validée',
-        description: 'L\'étudiant peut maintenant accéder à la plateforme',
+        description: "L'étudiant peut maintenant accéder à la plateforme",
       });
 
       fetchPendingProfiles();
+      fetchValidProfiles();
     } catch (error) {
-      console.error('Error validating profile:', error);
+      console.error('Error validating student profile:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de valider l\'inscription',
+        description: "Impossible de valider l'inscription de l'étudiant",
         variant: 'destructive',
       });
     }
   };
 
-  const handleRejectProfile = async (profileId: string) => {
+  const handleRejectStudent = async (profileId: string) => {
     try {
       const { error } = await supabase
         .from('profiles')
@@ -244,20 +234,75 @@ const GestionnaireDashboard = () => {
 
       toast({
         title: 'Inscription refusée',
-        description: 'L\'étudiant a été notifié',
+        description: "L'étudiant a été notifié",
       });
 
       fetchPendingProfiles();
     } catch (error) {
-      console.error('Error rejecting profile:', error);
+      console.error('Error rejecting student profile:', error);
       toast({
         title: 'Erreur',
-        description: 'Impossible de refuser l\'inscription',
+        description: "Impossible de refuser l'inscription de l'étudiant",
         variant: 'destructive',
       });
     }
   };
 
+  const handleValidateProfessor = async (profileId: string) => {
+    try {
+      const { error: profileError } = await supabase
+        .from('profiles')
+        .update({ statut: 'valide_prof' })
+        .eq('id', profileId);
+
+      if (profileError) throw profileError;
+
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({ user_id: profileId, role: 'professeur' });
+
+      if (roleError) throw roleError;
+
+      toast({
+        title: 'Professeur validé',
+        description: 'Le professeur peut maintenant accéder à son espace et gérer ses groupes',
+      });
+
+      fetchProfessors();
+    } catch (error) {
+      console.error('Error validating professor profile:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de valider le professeur',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleRejectProfessor = async (profileId: string) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ statut: 'refuse_prof' })
+        .eq('id', profileId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Inscription refusée',
+        description: 'Le professeur a été notifié',
+      });
+
+      fetchProfessors();
+    } catch (error) {
+      console.error('Error rejecting professor profile:', error);
+      toast({
+        title: 'Erreur',
+        description: "Impossible de refuser l'inscription du professeur",
+        variant: 'destructive',
+      });
+    }
+  };
   const handleCreateGroupe = async () => {
     if (!newGroupe.nom || !newGroupe.niveau) {
       toast({
@@ -350,16 +395,19 @@ const GestionnaireDashboard = () => {
   const getStatusBadge = (statut: string) => {
     switch (statut) {
       case 'en_attente':
+      case 'en_attente_prof':
         return <Badge className="bg-warning text-warning-foreground">En attente</Badge>;
       case 'valide':
-        return <Badge className="bg-success text-success-foreground">Validé</Badge>;
+        return <Badge className="bg-success text-success-foreground">Étudiant validé</Badge>;
+      case 'valide_prof':
+        return <Badge className="bg-success text-success-foreground">Professeur</Badge>;
       case 'refuse':
+      case 'refuse_prof':
         return <Badge className="bg-destructive text-destructive-foreground">Refusé</Badge>;
       default:
         return <Badge>{statut}</Badge>;
     }
   };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -467,42 +515,47 @@ const GestionnaireDashboard = () => {
                   </p>
                 ) : (
                   <div className="space-y-4 max-h-96 overflow-y-auto">
-                    {pendingProfiles.map((profile) => (
-                      <div
-                        key={profile.id}
-                        className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border"
-                      >
-                        <div className="flex-1">
-                          <h4 className="font-semibold">
-                            {profile.prenom} {profile.nom}
-                          </h4>
-                          <p className="text-sm text-muted-foreground">{profile.telephone}</p>
-                          <p className="text-sm text-muted-foreground">{profile.adresse}</p>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Inscrit le: {new Date(profile.date_inscription).toLocaleDateString('fr-FR')}
-                          </p>
+                      {pendingProfiles.map((profile) => (
+                        <div
+                          key={profile.id}
+                          className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border border-border"
+                        >
+                          <div className="flex-1">
+                            <h4 className="font-semibold">
+                              {profile.prenom} {profile.nom}
+                            </h4>
+                            <p className="text-sm text-muted-foreground">{profile.telephone}</p>
+                            <p className="text-sm text-muted-foreground">{profile.adresse}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Inscrit le: {new Date(profile.date_inscription).toLocaleDateString('fr-FR')}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            {getStatusBadge(profile.statut)}
+                            {profile.statut === 'en_attente' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  className="bg-success hover:bg-success/90 text-success-foreground"
+                                  onClick={() => handleValidateStudent(profile.id)}
+                                >
+                                  <CheckCircle className="h-4 w-4 mr-1" />
+                                  Valider
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                                  onClick={() => handleRejectStudent(profile.id)}
+                                >
+                                  <XCircle className="h-4 w-4 mr-1" />
+                                  Refuser
+                                </Button>
+                              </>
+                            )}
+                          </div>
                         </div>
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            className="bg-success hover:bg-success/90 text-success-foreground"
-                            onClick={() => handleValidateProfile(profile.id)}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Valider
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                            onClick={() => handleRejectProfile(profile.id)}
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            Refuser
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 )}
               </CardContent>
@@ -542,12 +595,12 @@ const GestionnaireDashboard = () => {
                         </div>
                         <div className="flex gap-2">
                           {getStatusBadge(prof.statut)}
-                          {prof.statut === 'en_attente' && (
+                          {prof.statut === 'en_attente_prof' && (
                             <>
                               <Button
                                 size="sm"
                                 className="bg-success hover:bg-success/90 text-success-foreground"
-                                onClick={() => handleValidateProfile(prof.id)}
+                                onClick={() => handleValidateProfessor(prof.id)}
                               >
                                 <CheckCircle className="h-4 w-4 mr-1" />
                                 Valider
@@ -556,7 +609,7 @@ const GestionnaireDashboard = () => {
                                 size="sm"
                                 variant="outline"
                                 className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
-                                onClick={() => handleRejectProfile(prof.id)}
+                                onClick={() => handleRejectProfessor(prof.id)}
                               >
                                 <XCircle className="h-4 w-4 mr-1" />
                                 Refuser
@@ -791,17 +844,27 @@ const GestionnaireDashboard = () => {
                               {groupe.students && groupe.students.length > 0 && (
                                 <div className="space-y-3">
                                   <h4 className="font-semibold text-sm">Étudiants affectés</h4>
-                                  <div className="border rounded-lg divide-y max-h-60 overflow-y-auto">
-                                    {groupe.students.map((student) => (
-                                      <div key={student.id} className="p-3 flex items-center justify-between hover:bg-muted/50">
-                                        <div>
-                                          <p className="font-medium">{student.prenom} {student.nom}</p>
-                                          <p className="text-xs text-muted-foreground">
-                                            Inscrit le {new Date(student.date_inscription).toLocaleDateString('fr-FR')}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    ))}
+                                  <div className="border rounded-lg max-h-60 overflow-y-auto">
+                                    <Table>
+                                      <TableHeader>
+                                        <TableRow>
+                                          <TableHead>Nom</TableHead>
+                                          <TableHead>Prénom</TableHead>
+                                          <TableHead>Date d'inscription</TableHead>
+                                        </TableRow>
+                                      </TableHeader>
+                                      <TableBody>
+                                        {groupe.students.map((student) => (
+                                          <TableRow key={student.id}>
+                                            <TableCell className="font-medium">{student.nom}</TableCell>
+                                            <TableCell>{student.prenom}</TableCell>
+                                            <TableCell className="text-xs text-muted-foreground">
+                                              {new Date(student.date_inscription).toLocaleDateString('fr-FR')}
+                                            </TableCell>
+                                          </TableRow>
+                                        ))}
+                                      </TableBody>
+                                    </Table>
                                   </div>
                                 </div>
                               )}
