@@ -190,16 +190,29 @@ const Home = () => {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8 animate-fade-in-up">
               <div className="inline-block px-4 py-2 bg-primary/10 text-primary rounded-full text-sm font-semibold">
-                🎓 Plateforme d'apprentissage de l'allemand
+                🎓 Learn German A1-B2 in Morocco
               </div>
               <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold leading-tight">
-                Maîtrisez l'<span className="text-gradient-primary">allemand</span> avec
+                Master <span className="text-gradient-primary">German</span> with
                 <span className="text-gradient-secondary"> Acadewi</span>
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed">
-                Rejoignez une plateforme moderne et ergonomique conçue pour vous faire progresser rapidement.
-                Cours structurés, exercices interactifs et suivi personnalisé.
+                Live classes + Expert teachers + Goethe certification
               </p>
+              <div className="flex flex-wrap gap-4 text-lg">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-success" />
+                  <span>Live Interactive Classes</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-success" />
+                  <span>Expert Native Teachers</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-5 w-5 text-success" />
+                  <span>Goethe Certification Prep</span>
+                </div>
+              </div>
               <div className="flex flex-wrap gap-4">
                 <Button asChild size="lg" variant="hero" className="text-lg px-8">
                   <Link to="/register">
@@ -239,6 +252,217 @@ const Home = () => {
                 className="relative rounded-2xl shadow-2xl w-full h-auto animate-float"
               />
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Course Overview Section */}
+      <section className="py-20 bg-gradient-to-br from-primary/10 via-background to-secondary/10">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 space-y-4 animate-fade-in-up">
+            <h2 className="text-4xl md:text-5xl font-bold">
+              A1 Course <span className="text-gradient-primary">Details</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Your journey to German proficiency starts here
+            </p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto">
+            <Card className="border-2 border-primary/20 hover:border-primary hover:shadow-2xl transition-all duration-300 overflow-hidden">
+              <CardContent className="p-8 md:p-12">
+                <div className="grid md:grid-cols-2 gap-8">
+                  <div className="space-y-6">
+                    <div>
+                      <div className="text-5xl font-bold text-gradient-primary mb-2">€75</div>
+                      <div className="text-muted-foreground">per month</div>
+                      <div className="text-sm text-muted-foreground mt-1">€225 total for 13 weeks</div>
+                    </div>
+                    
+                    <div className="space-y-4">
+                      <div className="flex items-start gap-3">
+                        <Clock className="h-5 w-5 text-primary shrink-0 mt-1" />
+                        <div>
+                          <div className="font-semibold">Schedule</div>
+                          <div className="text-sm text-muted-foreground">18:00 - 19:30</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-3">
+                        <BookOpen className="h-5 w-5 text-primary shrink-0 mt-1" />
+                        <div>
+                          <div className="font-semibold">Class Days</div>
+                          <div className="text-sm text-muted-foreground">Mon, Tue, Wed + Fri (Sprechen)</div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-start gap-3">
+                        <Award className="h-5 w-5 text-primary shrink-0 mt-1" />
+                        <div>
+                          <div className="font-semibold">Duration</div>
+                          <div className="text-sm text-muted-foreground">13 weeks intensive program</div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="space-y-6">
+                    <div className="bg-primary/5 rounded-lg p-6 border border-primary/10">
+                      <div className="text-2xl font-bold mb-4">What's Included</div>
+                      <ul className="space-y-3">
+                        <li className="flex items-start gap-2">
+                          <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                          <span>52 live interactive sessions</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                          <span>Extra speaking practice (Sprechen)</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                          <span>All course materials included</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                          <span>Personal progress tracking</span>
+                        </li>
+                        <li className="flex items-start gap-2">
+                          <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                          <span>Goethe exam preparation</span>
+                        </li>
+                      </ul>
+                    </div>
+                    
+                    <div className="bg-secondary/10 rounded-lg p-4 border border-secondary/20">
+                      <div className="flex items-center gap-2 text-secondary font-semibold">
+                        <Star className="h-5 w-5 fill-secondary" />
+                        <span>Starts December 15, 2025</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="mt-8 pt-8 border-t">
+                  <Button asChild size="lg" variant="hero" className="w-full text-lg">
+                    <Link to="/register">
+                      Enroll Now <ArrowRight className="ml-2 h-5 w-5" />
+                    </Link>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 space-y-4 animate-fade-in-up">
+            <h2 className="text-4xl md:text-5xl font-bold">
+              How <span className="text-gradient-primary">It Works</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Your path to German fluency in 5 simple steps
+            </p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto space-y-6">
+            {[
+              {
+                step: "01",
+                title: "Register & Choose Your Level",
+                description: "Create your account and take our placement test to find the perfect starting point for your German journey.",
+              },
+              {
+                step: "02",
+                title: "Meet Your Teacher",
+                description: "Get introduced to your expert native German teacher and your learning group.",
+              },
+              {
+                step: "03",
+                title: "Join Live Classes",
+                description: "Attend interactive sessions 4 times per week. Practice speaking, listening, and grammar with real-time feedback.",
+              },
+              {
+                step: "04",
+                title: "Practice & Progress",
+                description: "Complete exercises, track your progress, and receive personalized feedback throughout the course.",
+              },
+              {
+                step: "05",
+                title: "Get Certified",
+                description: "Prepare for and pass the Goethe certification exam with confidence.",
+              },
+            ].map((item, index) => (
+              <Card
+                key={index}
+                className="border-2 hover:border-primary hover:shadow-lg transition-all duration-300 group"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <CardContent className="p-6 flex gap-6">
+                  <div className="text-6xl font-bold text-gradient-primary opacity-20 group-hover:opacity-100 transition-opacity">
+                    {item.step}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    <h3 className="text-2xl font-bold">{item.title}</h3>
+                    <p className="text-muted-foreground leading-relaxed">{item.description}</p>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Teacher Introduction Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 space-y-4 animate-fade-in-up">
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Meet Your <span className="text-gradient-primary">Teacher</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Learn from experienced, passionate educators
+            </p>
+          </div>
+          
+          <div className="max-w-3xl mx-auto">
+            <Card className="border-2 border-primary/20 hover:shadow-2xl transition-all duration-300">
+              <CardContent className="p-8 md:p-12">
+                <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-secondary flex items-center justify-center text-5xl font-bold text-white shrink-0">
+                    Y
+                  </div>
+                  
+                  <div className="flex-1 text-center md:text-left space-y-4">
+                    <div>
+                      <h3 className="text-3xl font-bold">Youssef Bennani</h3>
+                      <p className="text-muted-foreground text-lg">Senior German Instructor</p>
+                    </div>
+                    
+                    <p className="text-muted-foreground leading-relaxed">
+                      Native German speaker with over 8 years of teaching experience. Youssef holds a Master's degree in German Language 
+                      and Literature from Goethe University Frankfurt. He has successfully prepared hundreds of students for Goethe 
+                      certifications from A1 to C2 levels. His teaching philosophy focuses on practical communication skills while 
+                      maintaining strong grammatical foundations.
+                    </p>
+                    
+                    <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                      <div className="px-3 py-1 bg-primary/10 text-primary rounded-full text-sm font-semibold">
+                        Goethe Certified
+                      </div>
+                      <div className="px-3 py-1 bg-secondary/10 text-secondary rounded-full text-sm font-semibold">
+                        8+ Years Experience
+                      </div>
+                      <div className="px-3 py-1 bg-success/10 text-success rounded-full text-sm font-semibold">
+                        500+ Students
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -389,6 +613,96 @@ const Home = () => {
             <p className="text-lg text-muted-foreground italic">
               🇲🇦 Premier centre d'apprentissage de l'allemand au Maroc à intégrer l'IA dans sa pédagogie
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Transparency Section */}
+      <section className="py-20 bg-gradient-to-br from-primary/5 via-secondary/5 to-primary/5">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 space-y-4 animate-fade-in-up">
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Transparent <span className="text-gradient-primary">Pricing</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              No hidden fees. No surprises. Just quality education.
+            </p>
+          </div>
+          
+          <div className="max-w-5xl mx-auto">
+            <Card className="border-2 border-primary/20 hover:shadow-2xl transition-all duration-300">
+              <CardContent className="p-8 md:p-12">
+                <div className="text-center mb-8">
+                  <div className="text-6xl md:text-7xl font-bold text-gradient-primary mb-4">
+                    €75<span className="text-2xl text-muted-foreground">/month</span>
+                  </div>
+                  <p className="text-xl text-muted-foreground">or €225 for the complete A1 course</p>
+                </div>
+                
+                <div className="grid md:grid-cols-2 gap-8 mb-8">
+                  <div className="space-y-4">
+                    <h3 className="text-2xl font-bold mb-4">What You Pay For</h3>
+                    <ul className="space-y-3">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <span>52 live interactive classes (13 weeks)</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <span>Extra speaking sessions every Friday</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <span>All digital course materials</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <span>Access to exercise library</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <span>Progress tracking dashboard</span>
+                      </li>
+                    </ul>
+                  </div>
+                  
+                  <div className="space-y-4">
+                    <h3 className="text-2xl font-bold mb-4">What's Free</h3>
+                    <ul className="space-y-3">
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <span>Platform access & account</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <span>Placement test</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <span>Study resources & tips</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <span>Community support</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                        <span>Certificate upon completion</span>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="bg-secondary/10 rounded-lg p-6 border border-secondary/20 text-center">
+                  <p className="text-lg mb-4">
+                    <strong>Compare:</strong> Traditional language schools charge €800-1200 for similar courses
+                  </p>
+                  <p className="text-muted-foreground">
+                    With Acadewi, you get the same quality education at a fraction of the cost, with the added flexibility of online learning.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
