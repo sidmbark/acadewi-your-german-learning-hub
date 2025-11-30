@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { BookOpen, Users, Award, Clock, CheckCircle2, Star, ArrowRight } from "lucide-react";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { BookOpen, Users, Award, Clock, CheckCircle2, Star, ArrowRight, MessageCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import heroImage from "@/assets/hero-learning.jpg";
 
@@ -29,12 +30,70 @@ const Home = () => {
   ];
 
   const benefits = [
-    "Plateforme intuitive et moderne",
-    "Professeurs natifs qualifiés",
-    "Exercices interactifs gamifiés",
-    "Suivi de progression en temps réel",
-    "Documents pédagogiques inclus",
-    "Sessions en visioconférence HD",
+    "Accès complet à la plateforme (valeur 750DH/mois)",
+    "Accompagnement personnalisé dès le début",
+    "Support direct de notre équipe",
+    "50% de réduction au lancement",
+  ];
+
+  const whyGerman = [
+    {
+      icon: BookOpen,
+      title: "Universités Gratuites",
+      description: "Accédez à l'enseignement supérieur de qualité sans frais de scolarité en Allemagne",
+    },
+    {
+      icon: Award,
+      title: "Salaires Compétitifs",
+      description: "Profitez d'opportunités professionnelles avec des rémunérations attractives",
+    },
+    {
+      icon: Users,
+      title: "Migration Qualifiée",
+      description: "Facilitez votre installation avec des programmes dédiés aux professionnels qualifiés",
+    },
+    {
+      icon: Star,
+      title: "Qualité de Vie",
+      description: "Bénéficiez d'un environnement stable avec une excellente qualité de vie",
+    },
+  ];
+
+  const formulas = [
+    {
+      icon: "📍",
+      title: "Présentiel",
+      description: "Cours en face-à-face dans nos locaux avec interaction directe",
+    },
+    {
+      icon: "💻",
+      title: "En Ligne",
+      description: "Apprenez depuis chez vous avec des sessions en visioconférence",
+    },
+    {
+      icon: "⚡",
+      title: "Intensif",
+      description: "Progressez rapidement avec un programme accéléré et intensif",
+    },
+  ];
+
+  const faqs = [
+    {
+      question: "Combien de temps dure la formation ?",
+      answer: "La durée dépend du niveau visé. Comptez 3 à 6 mois par niveau (A1, A2, B1, B2, C1, C2).",
+    },
+    {
+      question: "Quels sont les modes de paiement acceptés ?",
+      answer: "Nous acceptons les virements bancaires. Après inscription, vous devez télécharger votre preuve de paiement.",
+    },
+    {
+      question: "Comment se déroulent les cours en ligne ?",
+      answer: "Les cours se font via Zoom avec des sessions interactives, des exercices et un suivi personnalisé.",
+    },
+    {
+      question: "Puis-je changer de formule en cours de formation ?",
+      answer: "Oui, contactez notre équipe pour adapter votre formule selon vos besoins.",
+    },
   ];
 
   const testimonials = [
@@ -73,6 +132,9 @@ const Home = () => {
             </a>
             <a href="#benefits" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
               Avantages
+            </a>
+            <a href="#faq" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
+              FAQ
             </a>
             <a href="#testimonials" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
               Témoignages
@@ -182,74 +244,126 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
-      <section id="benefits" className="py-20">
+      {/* Why German Section */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6 animate-fade-in-up">
-              <h2 className="text-4xl md:text-5xl font-bold">
-                Pourquoi choisir <span className="text-gradient-secondary">Acadewi</span> ?
-              </h2>
-              <p className="text-lg text-muted-foreground">
-                Notre plateforme a été conçue avec une attention particulière à l'ergonomie et à l'expérience
-                utilisateur pour maximiser votre apprentissage.
-              </p>
-              <div className="space-y-4">
-                {benefits.map((benefit, index) => (
-                  <div key={index} className="flex items-center gap-3 group">
-                    <CheckCircle2 className="h-6 w-6 text-success shrink-0 group-hover:scale-110 transition-transform" />
-                    <span className="text-lg">{benefit}</span>
+          <div className="text-center mb-16 space-y-4 animate-fade-in-up">
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Pourquoi l'<span className="text-gradient-primary">Allemand</span> ?
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+              Ouvrez-vous les portes d'un avenir prometteur
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {whyGerman.map((reason, index) => (
+              <Card
+                key={index}
+                className="border-2 hover:border-primary hover:shadow-lg transition-all duration-300 animate-scale-in group"
+                style={{ animationDelay: `${index * 100}ms` }}
+              >
+                <CardContent className="p-6 space-y-4 text-center">
+                  <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-secondary to-secondary-light flex items-center justify-center mx-auto group-hover:scale-110 transition-transform">
+                    <reason.icon className="h-7 w-7 text-secondary-foreground" />
                   </div>
-                ))}
-              </div>
-              <Button asChild size="lg" variant="secondary" className="mt-6">
-                <Link to="/register">
-                  Rejoindre Acadewi <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </Button>
-            </div>
-            <div className="relative">
-              <div className="absolute inset-0 bg-gradient-to-br from-secondary/20 to-primary/20 blur-3xl" />
-              <Card className="relative p-8 border-2 shadow-xl">
-                <CardContent className="space-y-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-success to-success-light flex items-center justify-center">
-                        <Award className="h-8 w-8 text-success-foreground" />
-                      </div>
-                      <div>
-                        <div className="text-3xl font-bold">500+</div>
-                        <div className="text-muted-foreground">Étudiants actifs</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary-light flex items-center justify-center">
-                        <BookOpen className="h-8 w-8 text-primary-foreground" />
-                      </div>
-                      <div>
-                        <div className="text-3xl font-bold">1200+</div>
-                        <div className="text-muted-foreground">Heures de cours</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="w-16 h-16 rounded-full bg-gradient-to-br from-secondary to-secondary-light flex items-center justify-center">
-                        <Users className="h-8 w-8 text-secondary-foreground" />
-                      </div>
-                      <div>
-                        <div className="text-3xl font-bold">15+</div>
-                        <div className="text-muted-foreground">Professeurs qualifiés</div>
-                      </div>
-                    </div>
-                  </div>
+                  <h3 className="text-xl font-semibold">{reason.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed">{reason.description}</p>
                 </CardContent>
               </Card>
-            </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section id="benefits" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Ce qui est <span className="text-gradient-secondary">inclus</span>
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Tout ce dont vous avez besoin pour réussir
+            </p>
+          </div>
+          <div className="max-w-3xl mx-auto space-y-4">
+            {benefits.map((benefit, index) => (
+              <div
+                key={index}
+                className="flex items-center gap-3 group bg-background p-6 rounded-lg border-2 hover:border-primary transition-all"
+              >
+                <CheckCircle2 className="h-6 w-6 text-success shrink-0 group-hover:scale-110 transition-transform" />
+                <span className="text-lg">{benefit}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Formulas Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Nos <span className="text-gradient-primary">Formules</span>
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Choisissez le mode d'apprentissage qui vous convient
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {formulas.map((formula, index) => (
+              <Card
+                key={index}
+                className="border-2 hover:border-primary hover:shadow-xl transition-all duration-300 group"
+              >
+                <CardContent className="p-8 space-y-4 text-center">
+                  <div className="text-6xl mb-4 group-hover:scale-110 transition-transform">
+                    {formula.icon}
+                  </div>
+                  <h3 className="text-2xl font-bold">{formula.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed">{formula.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 space-y-4">
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Questions <span className="text-gradient-primary">Fréquentes</span>
+            </h2>
+            <p className="text-xl text-muted-foreground">
+              Tout ce que vous devez savoir
+            </p>
+          </div>
+          <div className="max-w-3xl mx-auto">
+            <Accordion type="single" collapsible className="space-y-4">
+              {faqs.map((faq, index) => (
+                <AccordionItem
+                  key={index}
+                  value={`item-${index}`}
+                  className="bg-background border-2 rounded-lg px-6 hover:border-primary transition-colors"
+                >
+                  <AccordionTrigger className="text-lg font-semibold hover:text-primary">
+                    {faq.question}
+                  </AccordionTrigger>
+                  <AccordionContent className="text-muted-foreground leading-relaxed">
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
-      <section id="testimonials" className="py-20 bg-muted/30">
+      <section id="testimonials" className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16 space-y-4">
             <h2 className="text-4xl md:text-5xl font-bold">
@@ -283,18 +397,28 @@ const Home = () => {
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-br from-primary to-primary-dark text-primary-foreground">
         <div className="container mx-auto px-4 text-center space-y-8">
-          <h2 className="text-4xl md:text-5xl font-bold">Prêt à commencer votre voyage ?</h2>
+          <h2 className="text-4xl md:text-5xl font-bold">
+            Rejoignez les étudiants qui réussissent avec Acadewi
+          </h2>
           <p className="text-xl opacity-90 max-w-2xl mx-auto">
-            Inscrivez-vous maintenant et accédez à tous nos cours d'allemand. Première semaine gratuite !
+            Études, travail, migration : nous vous accompagnons vers la réussite en Allemagne
           </p>
           <div className="flex flex-wrap gap-4 justify-center">
             <Button asChild size="lg" variant="secondary" className="text-lg px-8">
               <Link to="/register">
-                S'inscrire maintenant <ArrowRight className="ml-2 h-5 w-5" />
+                S'inscrire via formulaire <ArrowRight className="ml-2 h-5 w-5" />
               </Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="text-lg px-8 bg-transparent border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
-              <Link to="/login">J'ai déjà un compte</Link>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="text-lg px-8 bg-transparent border-2 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary"
+            >
+              <a href="https://wa.me/212" target="_blank" rel="noopener noreferrer">
+                <MessageCircle className="mr-2 h-5 w-5" />
+                Contacter via WhatsApp
+              </a>
             </Button>
           </div>
         </div>
@@ -318,6 +442,7 @@ const Home = () => {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#features" className="hover:text-primary transition-colors">Fonctionnalités</a></li>
                 <li><a href="#benefits" className="hover:text-primary transition-colors">Avantages</a></li>
+                <li><a href="#faq" className="hover:text-primary transition-colors">FAQ</a></li>
                 <li><a href="#testimonials" className="hover:text-primary transition-colors">Témoignages</a></li>
               </ul>
             </div>
