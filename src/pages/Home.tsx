@@ -9,7 +9,8 @@ import { useState } from "react";
 import { toast } from "sonner";
 import heroImage from "@/assets/hero-learning.jpg";
 import youssefPhoto from "@/assets/youssef-ouarrak.png";
-import logo from "@/assets/acadewi-logo.jpeg";
+import workshop1 from "@/assets/workshop-1.jpeg";
+import workshop2 from "@/assets/workshop-2.jpeg";
 import { supabase } from "@/integrations/supabase/client";
 
 const Home = () => {
@@ -170,7 +171,7 @@ const Home = () => {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container mx-auto px-4 flex h-16 items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
-            <img src={logo} alt="Acadewi Logo" className="h-12 w-auto" />
+            <span className="text-3xl font-bold text-gradient-primary">Acadewi</span>
           </Link>
           <nav className="hidden md:flex gap-8">
             <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
@@ -632,6 +633,96 @@ const Home = () => {
             <p className="text-lg text-muted-foreground italic">
               🇲🇦 Premier centre d'apprentissage de l'allemand au Maroc à intégrer l'IA dans sa pédagogie
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Cultural Workshops Section */}
+      <section className="py-20 bg-muted/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16 space-y-4 animate-fade-in-up">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-secondary/10 text-secondary rounded-full text-sm font-semibold mb-4">
+              <Users className="h-4 w-4" />
+              Expérience immersive
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold">
+              <span className="text-gradient-secondary">Workshops</span> Culturels
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Rencontrez des Allemands et découvrez la culture allemande à travers des événements interactifs
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            <Card className="border-2 border-secondary/20 hover:border-secondary hover:shadow-xl transition-all duration-300 overflow-hidden group">
+              <div className="relative h-80 overflow-hidden">
+                <img 
+                  src={workshop1} 
+                  alt="Workshop interactif avec étudiants" 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent" />
+              </div>
+              <CardContent className="p-8 space-y-4 -mt-20 relative z-10">
+                <h3 className="text-2xl font-bold">Échanges Interculturels</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Participez à des sessions interactives avec des personnes venant d'Allemagne. Pratiquez la langue dans un contexte authentique et créez des connexions internationales.
+                </p>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                    <span>Rencontres avec des natifs allemands</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                    <span>Conversations authentiques</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                    <span>Networking international</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+            
+            <Card className="border-2 border-secondary/20 hover:border-secondary hover:shadow-xl transition-all duration-300 overflow-hidden group">
+              <div className="relative h-80 overflow-hidden">
+                <img 
+                  src={workshop2} 
+                  alt="Découverte de la culture allemande" 
+                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-background/90 to-transparent" />
+              </div>
+              <CardContent className="p-8 space-y-4 -mt-20 relative z-10">
+                <h3 className="text-2xl font-bold">Immersion Culturelle</h3>
+                <p className="text-muted-foreground leading-relaxed">
+                  Découvrez les traditions, coutumes et le mode de vie allemand à travers des activités ludiques et enrichissantes organisées régulièrement.
+                </p>
+                <ul className="space-y-2">
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                    <span>Ateliers thématiques culturels</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                    <span>Découverte des traditions</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-success shrink-0 mt-0.5" />
+                    <span>Activités interactives</span>
+                  </li>
+                </ul>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="text-center mt-12">
+            <Button asChild size="lg" variant="outline" className="text-lg">
+              <Link to="/register">
+                Rejoindre les workshops <Users className="ml-2 h-5 w-5" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
