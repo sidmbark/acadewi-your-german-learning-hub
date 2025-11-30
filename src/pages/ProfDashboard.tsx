@@ -168,7 +168,7 @@ export default function ProfDashboard() {
   const handleCreateCours = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!coursFormData.titre || !coursFormData.date || !coursFormData.heure || !coursFormData.lien_zoom || !coursFormData.groupe_id) {
+    if (!coursFormData.titre || !coursFormData.date || !coursFormData.heure || !coursFormData.groupe_id) {
       toast({
         title: 'Erreur',
         description: 'Veuillez remplir tous les champs obligatoires',
@@ -178,12 +178,42 @@ export default function ProfDashboard() {
     }
 
     try {
+      let lienZoom = coursFormData.lien_zoom;
+
+      // Si c'est une création (pas une modification), créer un meeting Zoom
+      if (!editingCours) {
+        const startDateTime = `${coursFormData.date}T${coursFormData.heure}:00`;
+        const duration = 60; // 1 heure par défaut
+
+        console.log('Creating Zoom meeting for:', coursFormData.titre);
+        
+        const { data: zoomData, error: zoomError } = await supabase.functions.invoke('create-zoom-meeting', {
+          body: {
+            topic: coursFormData.titre,
+            start_time: startDateTime,
+            duration: duration,
+          },
+        });
+
+        if (zoomError) {
+          console.error('Zoom error:', zoomError);
+          throw new Error('Erreur lors de la création du meeting Zoom');
+        }
+
+        if (!zoomData?.join_url) {
+          throw new Error('URL Zoom non reçue');
+        }
+
+        lienZoom = zoomData.join_url;
+        console.log('Zoom meeting created:', zoomData.meeting_id);
+      }
+
       const dataToSave = {
         titre: coursFormData.titre,
         description: coursFormData.description,
         date: coursFormData.date,
         heure: coursFormData.heure,
-        lien_zoom: coursFormData.lien_zoom,
+        lien_zoom: lienZoom,
         groupe_id: coursFormData.groupe_id,
         professeur_id: user?.id,
         statut: 'planifie',
@@ -207,7 +237,7 @@ export default function ProfDashboard() {
         
         toast({
           title: 'Succès',
-          description: 'Le cours a été créé avec succès',
+          description: 'Le cours et le meeting Zoom ont été créés avec succès',
         });
       }
 
@@ -611,16 +641,27 @@ export default function ProfDashboard() {
                       </Select>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="lien_zoom">Lien Zoom *</Label>
-                      <Input
-                        id="lien_zoom"
-                        type="url"
-                        value={coursFormData.lien_zoom}
-                        onChange={(e) => setCoursFormData({ ...coursFormData, lien_zoom: e.target.value })}
-                        placeholder="https://zoom.us/j/..."
-                      />
-                    </div>
+                    {editingCours ? (
+                      <div className="space-y-2">
+                        <Label htmlFor="lien_zoom">Lien Zoom *</Label>
+                        <Input
+                          id="lien_zoom"
+                          type="url"
+                          value={coursFormData.lien_zoom}
+                          onChange={(e) => setCoursFormData({ ...coursFormData, lien_zoom: e.target.value })}
+                          placeholder="https://zoom.us/j/..."
+                        />
+                      </div>
+                    ) : (
+                      <div className="rounded-lg bg-primary/10 p-4">
+                        <p className="text-sm text-foreground flex items-center gap-2">
+                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          Un meeting Zoom sera créé automatiquement lors de la création du cours
+                        </p>
+                      </div>
+                    )}
 
                     <div className="flex justify-end gap-2 pt-4">
                       <Button type="button" variant="outline" onClick={() => {
