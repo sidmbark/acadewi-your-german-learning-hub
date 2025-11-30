@@ -10,6 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { CoursDetailDialog } from '@/components/CoursDetailDialog';
 import { ExerciceDetailDialog } from '@/components/ExerciceDetailDialog';
+import { ZoomMeetingModal } from '@/components/ZoomMeetingModal';
 
 interface Cours {
   id: string;
@@ -67,6 +68,8 @@ const Dashboard = () => {
   const [prochainsCours, setProchainsCours] = useState<Cours[]>([]);
   const [selectedCours, setSelectedCours] = useState<Cours | null>(null);
   const [coursDialogOpen, setCoursDialogOpen] = useState(false);
+  const [zoomMeetingOpen, setZoomMeetingOpen] = useState(false);
+  const [selectedZoomCours, setSelectedZoomCours] = useState<Cours | null>(null);
   const [exercices, setExercices] = useState<Exercice[]>([]);
   const [selectedExercice, setSelectedExercice] = useState<Exercice | null>(null);
   const [exerciceDialogOpen, setExerciceDialogOpen] = useState(false);
@@ -299,8 +302,9 @@ const Dashboard = () => {
     }
   };
 
-  const handleJoinZoom = (lienZoom: string) => {
-    window.open(lienZoom, '_blank', 'width=1200,height=800');
+  const handleJoinZoom = (cours: Cours) => {
+    setSelectedZoomCours(cours);
+    setZoomMeetingOpen(true);
   };
 
   const handleCoursClick = (cours: Cours) => {
@@ -474,7 +478,7 @@ const Dashboard = () => {
                           size="sm"
                           onClick={(e) => {
                             e.stopPropagation();
-                            handleJoinZoom(cours.lien_zoom);
+                            handleJoinZoom(cours);
                           }}
                         >
                           Rejoindre
@@ -639,7 +643,7 @@ const Dashboard = () => {
           open={coursDialogOpen}
           onOpenChange={setCoursDialogOpen}
           canJoin={selectedCours ? canJoinCours(selectedCours.date, selectedCours.heure) : false}
-          onJoinZoom={() => selectedCours && handleJoinZoom(selectedCours.lien_zoom)}
+          onJoinZoom={() => selectedCours && handleJoinZoom(selectedCours)}
         />
 
         <ExerciceDetailDialog
@@ -648,6 +652,13 @@ const Dashboard = () => {
           onOpenChange={setExerciceDialogOpen}
           userId={user?.id || ''}
           onSubmitSuccess={fetchDashboardData}
+        />
+
+        <ZoomMeetingModal
+          open={zoomMeetingOpen}
+          onOpenChange={setZoomMeetingOpen}
+          meetingUrl={selectedZoomCours?.lien_zoom || ''}
+          coursTitle={selectedZoomCours?.titre || ''}
         />
 
         {/* Quick Actions */}
