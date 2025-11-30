@@ -54,6 +54,7 @@ const GestionnaireDashboard = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [pendingProfiles, setPendingProfiles] = useState<Profile[]>([]);
+  const [validProfiles, setValidProfiles] = useState<Profile[]>([]);
   const [groupes, setGroupes] = useState<Groupe[]>([]);
   const [professors, setProfessors] = useState<any[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
@@ -81,6 +82,7 @@ const GestionnaireDashboard = () => {
     }
 
     fetchPendingProfiles();
+    fetchValidProfiles();
     fetchGroupes();
     fetchProfessors();
   }, [user, userRole, navigate]);
@@ -104,6 +106,21 @@ const GestionnaireDashboard = () => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchValidProfiles = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('statut', 'valide')
+        .order('date_inscription', { ascending: false });
+
+      if (error) throw error;
+      setValidProfiles(data || []);
+    } catch (error) {
+      console.error('Error fetching valid profiles:', error);
     }
   };
 
@@ -418,7 +435,7 @@ const GestionnaireDashboard = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-muted-foreground">Total étudiants</p>
-                  <p className="text-3xl font-bold mt-1">-</p>
+                  <p className="text-3xl font-bold mt-1">{validProfiles.length}</p>
                 </div>
                 <div className="w-12 h-12 rounded-full bg-gradient-to-br from-success to-success-light flex items-center justify-center">
                   <Users className="h-6 w-6 text-success-foreground" />
@@ -802,13 +819,11 @@ const GestionnaireDashboard = () => {
                                       <SelectValue placeholder="Sélectionner un étudiant" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                      {pendingProfiles
-                                        .filter(profile => profile.statut === 'valide')
-                                        .map((profile) => (
-                                          <SelectItem key={profile.id} value={profile.id}>
-                                            {profile.prenom} {profile.nom} - Inscrit le {new Date(profile.date_inscription).toLocaleDateString('fr-FR')}
-                                          </SelectItem>
-                                        ))}
+                                      {validProfiles.map((profile) => (
+                                        <SelectItem key={profile.id} value={profile.id}>
+                                          {profile.prenom} {profile.nom} - Inscrit le {new Date(profile.date_inscription).toLocaleDateString('fr-FR')}
+                                        </SelectItem>
+                                      ))}
                                     </SelectContent>
                                   </Select>
                                 </div>
