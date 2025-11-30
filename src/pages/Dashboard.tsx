@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { BookOpen, Users, Calendar, FileText, TrendingUp, Clock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,6 +40,7 @@ const Dashboard = () => {
   
   const [nextCours, setNextCours] = useState<Cours | null>(null);
   const [exercices, setExercices] = useState<Exercice[]>([]);
+  const [groupeInfo, setGroupeInfo] = useState<{ nom: string; niveau: string } | null>(null);
   const [stats, setStats] = useState({
     coursCount: 0,
     exercicesCompleted: 0,
@@ -78,6 +80,17 @@ const Dashboard = () => {
       if (!groupMember) {
         setLoadingData(false);
         return;
+      }
+      
+      // Get group info
+      const { data: groupData } = await supabase
+        .from('groupes')
+        .select('nom, niveau')
+        .eq('id', groupMember.groupe_id)
+        .single();
+        
+      if (groupData) {
+        setGroupeInfo(groupData);
       }
 
       // Récupérer le prochain cours
@@ -224,6 +237,13 @@ const Dashboard = () => {
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Tableau de bord</h1>
           <p className="text-muted-foreground">Vue d'ensemble de votre espace d'apprentissage</p>
+          {groupeInfo && (
+            <div className="mt-3">
+              <Badge className="bg-primary text-primary-foreground text-sm">
+                Groupe: {groupeInfo.nom} - {groupeInfo.niveau}
+              </Badge>
+            </div>
+          )}
         </div>
 
         {/* Stats Cards */}
