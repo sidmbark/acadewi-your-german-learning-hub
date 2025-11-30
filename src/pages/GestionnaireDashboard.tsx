@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Users, CheckCircle, XCircle, Plus, UserPlus } from 'lucide-react';
+import { BookOpen, Users, CheckCircle, XCircle, Plus, UserPlus, Mail } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -49,6 +49,16 @@ interface GroupMember {
   etudiant_id: string;
 }
 
+interface ContactMessage {
+  id: string;
+  nom: string;
+  email: string;
+  telephone: string;
+  message: string;
+  date_soumission: string;
+  lu: boolean;
+}
+
 const GestionnaireDashboard = () => {
   const { user, userRole, signOut } = useAuth();
   const navigate = useNavigate();
@@ -57,6 +67,7 @@ const GestionnaireDashboard = () => {
   const [validProfiles, setValidProfiles] = useState<Profile[]>([]);
   const [groupes, setGroupes] = useState<Groupe[]>([]);
   const [professors, setProfessors] = useState<any[]>([]);
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
   const [selectedStudent, setSelectedStudent] = useState<string | null>(null);
   const [selectedGroupeId, setSelectedGroupeId] = useState<string>('');
   const [selectedProfId, setSelectedProfId] = useState<string>('');
@@ -85,6 +96,7 @@ const GestionnaireDashboard = () => {
     fetchValidProfiles();
     fetchGroupes();
     fetchProfessors();
+    fetchContactMessages();
   }, [user, userRole, navigate]);
 
   const fetchPendingProfiles = async () => {
@@ -136,6 +148,25 @@ const GestionnaireDashboard = () => {
       setProfessors(data || []);
     } catch (error) {
       console.error('Error fetching professors:', error);
+    }
+  };
+
+  const fetchContactMessages = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('contact_messages')
+        .select('*')
+        .order('date_soumission', { ascending: false });
+
+      if (error) throw error;
+      setContactMessages(data || []);
+    } catch (error) {
+      console.error('Error fetching contact messages:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de charger les messages de contact',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -303,6 +334,31 @@ const GestionnaireDashboard = () => {
       });
     }
   };
+
+  const handleMarkAsRead = async (messageId: string) => {
+    try {
+      const { error } = await supabase
+        .from('contact_messages')
+        .update({ lu: true })
+        .eq('id', messageId);
+
+      if (error) throw error;
+
+      toast({
+        title: 'Message marqué comme lu',
+      });
+
+      fetchContactMessages();
+    } catch (error) {
+      console.error('Error marking message as read:', error);
+      toast({
+        title: 'Erreur',
+        description: 'Impossible de marquer le message comme lu',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleCreateGroupe = async () => {
     if (!newGroupe.nom || !newGroupe.niveau) {
       toast({
@@ -494,9 +550,17 @@ const GestionnaireDashboard = () => {
         </div>
 
         <Tabs defaultValue="students" className="mb-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="students">Étudiants en attente</TabsTrigger>
             <TabsTrigger value="professors">Professeurs</TabsTrigger>
+            <TabsTrigger value="messages">
+              Messages de contact
+              {contactMessages.filter(m => !m.lu).length > 0 && (
+                <Badge className="ml-2 bg-destructive text-destructive-foreground">
+                  {contactMessages.filter(m => !m.lu).length}
+                </Badge>
+              )}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="students">
@@ -616,6 +680,82 @@ const GestionnaireDashboard = () => {
                               </Button>
                             </>
                           )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="messages">
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="h-5 w-5 text-primary" />
+                  Messages de contact
+                </CardTitle>
+                <CardDescription>Messages reçus depuis le formulaire de contact de la page d'accueil</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {contactMessages.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Aucun message de contact
+                  </p>
+                ) : (
+                  <div className="space-y-4 max-h-96 overflow-y-auto">
+                    {contactMessages.map((message) => (
+                      <div
+                        key={message.id}
+                        className={`p-4 rounded-lg border ${
+                          message.lu 
+                            ? 'bg-muted/30 border-border' 
+                            : 'bg-primary/5 border-primary/20'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className="font-semibold">{message.nom}</h4>
+                              {!message.lu && (
+                                <Badge className="bg-primary text-primary-foreground">Nouveau</Badge>
+                              )}
+                            </div>
+                            <div className="space-y-1">
+                              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                <Mail className="h-3 w-3" />
+                                {message.email}
+                              </p>
+                              {message.telephone && (
+                                <p className="text-sm text-muted-foreground">
+                                  📞 {message.telephone}
+                                </p>
+                              )}
+                              <p className="text-xs text-muted-foreground">
+                                Reçu le: {new Date(message.date_soumission).toLocaleDateString('fr-FR', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric',
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
+                          </div>
+                          {!message.lu && (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleMarkAsRead(message.id)}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Marquer comme lu
+                            </Button>
+                          )}
+                        </div>
+                        <div className="mt-3 p-3 bg-background rounded border border-border">
+                          <p className="text-sm whitespace-pre-wrap">{message.message}</p>
                         </div>
                       </div>
                     ))}
