@@ -162,7 +162,7 @@ const Home = () => {
 
   const handleWhatsAppContact = () => {
     const message = encodeURIComponent("Bonjour, je souhaite obtenir plus d'informations sur les cours d'allemand chez Acadewi.");
-    window.open(`https://wa.me/212600000000?text=${message}`, "_blank");
+    window.open(`https://wa.me/212772173150?text=${message}`, "_blank");
   };
 
   return (

@@ -12,7 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
-import { BookOpen, Users, CheckCircle, XCircle, Plus, UserPlus, Mail } from 'lucide-react';
+import { BookOpen, Users, CheckCircle, XCircle, Plus, UserPlus, Mail, Eye, ExternalLink } from 'lucide-react';
 
 interface Profile {
   id: string;
@@ -22,6 +22,7 @@ interface Profile {
   adresse: string;
   statut: string;
   date_inscription: string;
+  photo_paiement?: string;
 }
 
 interface Groupe {
@@ -616,14 +617,44 @@ const GestionnaireDashboard = () => {
                                       Valider
                                     </Button>
                                   </DialogTrigger>
-                                  <DialogContent>
+                                  <DialogContent className="max-w-2xl">
                                     <DialogHeader>
                                       <DialogTitle>Valider l'inscription</DialogTitle>
                                       <DialogDescription>
-                                        Choisissez le niveau pour {profile.prenom} {profile.nom}
+                                        Vérifiez la preuve de paiement et choisissez le niveau pour {profile.prenom} {profile.nom}
                                       </DialogDescription>
                                     </DialogHeader>
                                     <div className="space-y-4 py-4">
+                                      {/* Payment Proof Section */}
+                                      <div className="space-y-2">
+                                        <Label className="flex items-center gap-2">
+                                          <Eye className="h-4 w-4" />
+                                          Preuve de paiement
+                                        </Label>
+                                        {profile.photo_paiement ? (
+                                          <div className="border rounded-lg p-4 bg-muted/50">
+                                            <img 
+                                              src={profile.photo_paiement} 
+                                              alt="Preuve de paiement" 
+                                              className="max-h-64 w-auto mx-auto rounded-lg shadow-md"
+                                            />
+                                            <Button
+                                              variant="outline"
+                                              size="sm"
+                                              className="mt-3 w-full"
+                                              onClick={() => window.open(profile.photo_paiement, '_blank')}
+                                            >
+                                              <ExternalLink className="h-4 w-4 mr-2" />
+                                              Ouvrir en plein écran
+                                            </Button>
+                                          </div>
+                                        ) : (
+                                          <div className="border rounded-lg p-4 bg-destructive/10 text-destructive text-center">
+                                            Aucune preuve de paiement téléchargée
+                                          </div>
+                                        )}
+                                      </div>
+                                      
                                       <div className="space-y-2">
                                         <Label htmlFor="niveau-validation">Niveau *</Label>
                                         <Select
