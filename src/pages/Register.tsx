@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const Register = () => {
   const [step, setStep] = useState(1);
@@ -20,6 +21,7 @@ const Register = () => {
     confirmPassword: "",
     phone: "",
     address: "",
+    niveau: "",
   });
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -42,7 +44,7 @@ const Register = () => {
 
   const handleNext = () => {
     if (step === 1) {
-      if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone) {
+      if (!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.niveau) {
         toast({
           title: "Erreur",
           description: "Veuillez remplir tous les champs requis",
@@ -96,6 +98,7 @@ const Register = () => {
         prenom: formData.firstName,
         telephone: formData.phone,
         adresse: formData.address,
+        niveau: formData.niveau,
       });
       
       if (signUpError) {
@@ -249,6 +252,25 @@ const Register = () => {
                       className="h-11"
                     />
                   </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="niveau">Niveau souhaité *</Label>
+                    <Select
+                      value={formData.niveau}
+                      onValueChange={(value) => setFormData({ ...formData, niveau: value })}
+                    >
+                      <SelectTrigger className="h-11">
+                        <SelectValue placeholder="Sélectionnez votre niveau" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="A1">A1 - Débutant</SelectItem>
+                        <SelectItem value="A2">A2 - Élémentaire</SelectItem>
+                        <SelectItem value="B1">B1 - Intermédiaire</SelectItem>
+                        <SelectItem value="B2">B2 - Intermédiaire avancé</SelectItem>
+                        <SelectItem value="C1">C1 - Avancé</SelectItem>
+                        <SelectItem value="C2">C2 - Maîtrise</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               )}
 
@@ -334,6 +356,7 @@ const Register = () => {
                       <p><span className="font-medium text-foreground">Nom:</span> {formData.firstName} {formData.lastName}</p>
                       <p><span className="font-medium text-foreground">Email:</span> {formData.email}</p>
                       <p><span className="font-medium text-foreground">Téléphone:</span> {formData.phone}</p>
+                      <p><span className="font-medium text-foreground">Niveau:</span> {formData.niveau}</p>
                     </div>
                   </div>
                 </div>
