@@ -161,8 +161,7 @@ const Home = () => {
   };
 
   const handleWhatsAppContact = () => {
-    const message = encodeURIComponent("Bonjour, je souhaite obtenir plus d'informations sur les cours d'allemand chez Acadewi.");
-    window.open(`https://wa.me/212772173150?text=${message}`, "_blank");
+    window.open("https://wa.me/212772173150?text=Bonjour%2C%20je%20souhaite%20avoir%20plus%20d'informations%20sur%20vos%20cours%20d'allemand.", "_blank");
   };
 
   return (
