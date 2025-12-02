@@ -60,12 +60,12 @@ async function createZoomMeeting(accessToken: string, meetingData: ZoomMeetingRe
       settings: {
         host_video: true,
         participant_video: true,
-        join_before_host: false,
+        join_before_host: true,
         mute_upon_entry: true,
         watermark: false,
         audio: 'both',
         auto_recording: 'none',
-        waiting_room: true,
+        waiting_room: false,
       },
     }),
   });
