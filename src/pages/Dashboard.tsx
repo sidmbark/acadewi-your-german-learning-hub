@@ -139,9 +139,11 @@ const Dashboard = () => {
         setGroupeInfo(groupData);
       }
 
-      // Récupérer les prochains cours (futurs uniquement)
+      // Récupérer les prochains cours (include yesterday for access)
       const now = new Date();
-      const today = now.toISOString().split('T')[0];
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
 
       const { data: coursData } = await supabase
         .from('cours')
@@ -150,15 +152,15 @@ const Dashboard = () => {
           groupes(nom, niveau)
         `)
         .eq('groupe_id', groupMember.groupe_id)
-        .gte('date', today)
+        .gte('date', yesterdayStr)
         .order('date', { ascending: true })
         .order('heure', { ascending: true })
-        .limit(5);
+        .limit(10);
 
-      // Filter out past courses for today and fetch professor info
+      // Filter out courses from before yesterday (keep today and yesterday's courses)
       const futureCours = coursData?.filter(c => {
         const coursDateTime = new Date(`${c.date}T${c.heure}`);
-        return coursDateTime.getTime() > now.getTime();
+        return coursDateTime.getTime() >= yesterday.getTime();
       });
 
       // Fetch professor info for each course

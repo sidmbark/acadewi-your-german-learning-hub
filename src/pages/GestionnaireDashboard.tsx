@@ -23,6 +23,7 @@ interface Profile {
   statut: string;
   date_inscription: string;
   photo_paiement?: string;
+  niveau?: string;
 }
 
 interface Groupe {
@@ -558,8 +559,9 @@ const GestionnaireDashboard = () => {
         </div>
 
         <Tabs defaultValue="students" className="mb-6">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="students">Étudiants en attente</TabsTrigger>
+            <TabsTrigger value="all-students">Tous les étudiants</TabsTrigger>
             <TabsTrigger value="professors">Professeurs</TabsTrigger>
             <TabsTrigger value="messages">
               Messages de contact
@@ -706,6 +708,75 @@ const GestionnaireDashboard = () => {
                         </div>
                       ))}
                   </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="all-students">
+            <Card className="border-2">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5 text-primary" />
+                  Liste complète des étudiants
+                </CardTitle>
+                <CardDescription>Tous les étudiants validés avec leurs groupes assignés</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {validProfiles.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-8">
+                    Aucun étudiant validé
+                  </p>
+                ) : (
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Nom</TableHead>
+                        <TableHead>Prénom</TableHead>
+                        <TableHead>Téléphone</TableHead>
+                        <TableHead>Niveau</TableHead>
+                        <TableHead>Groupe</TableHead>
+                        <TableHead>Date d'inscription</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {validProfiles.map((profile) => {
+                        // Find the group for this student
+                        const studentGroup = groupes.find(g => 
+                          g.students?.some((s: any) => s.id === profile.id)
+                        );
+                        
+                        return (
+                          <TableRow key={profile.id}>
+                            <TableCell className="font-medium">{profile.nom}</TableCell>
+                            <TableCell>{profile.prenom}</TableCell>
+                            <TableCell>{profile.telephone}</TableCell>
+                            <TableCell>
+                              {(profile as any).niveau ? (
+                                <Badge className="bg-primary text-primary-foreground">
+                                  {(profile as any).niveau}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-sm">-</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {studentGroup ? (
+                                <Badge variant="outline" style={{ borderColor: studentGroup.couleur, color: studentGroup.couleur }}>
+                                  {studentGroup.nom}
+                                </Badge>
+                              ) : (
+                                <span className="text-muted-foreground text-sm italic">Non assigné</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {new Date(profile.date_inscription).toLocaleDateString('fr-FR')}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
                 )}
               </CardContent>
             </Card>

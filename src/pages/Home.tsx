@@ -246,6 +246,14 @@ const Home = () => {
                 <Button asChild size="lg" variant="outline" className="text-lg px-8">
                   <Link to="/login">Connexion</Link>
                 </Button>
+                <Button
+                  onClick={handleWhatsAppContact}
+                  size="lg"
+                  className="text-lg px-8 bg-[#25D366] hover:bg-[#128C7E] text-white"
+                >
+                  <MessageCircle className="mr-2 h-5 w-5" />
+                  WhatsApp
+                </Button>
               </div>
               <div className="flex items-center gap-6 pt-4">
                 <div className="flex -space-x-3">
@@ -464,7 +472,7 @@ const Home = () => {
                   <div className="flex-1 text-center md:text-left space-y-4">
                     <div>
                       <h3 className="text-3xl font-bold">Youssef Ouarrak</h3>
-                      <p className="text-muted-foreground text-lg">Professeur d'allemand expert</p>
+                      <p className="text-muted-foreground text-lg">Professeur d'allemand expert à 10 ans passé en Allemagne</p>
                     </div>
                     
                     <p className="text-muted-foreground leading-relaxed">
@@ -1130,13 +1138,13 @@ const Home = () => {
               <h4 className="font-semibold mb-4">Contact</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>contact@acadewi.com</li>
-                <li>+33 1 23 45 67 89</li>
-                <li>Paris, France</li>
+                <li>+212 772-173150</li>
+                <li>Casablanca, Maroc</li>
               </ul>
             </div>
           </div>
           <div className="mt-12 pt-8 border-t text-center text-sm text-muted-foreground">
-            <p>&copy; 2024 Acadewi. Tous droits réservés.</p>
+            <p>© 2025 Acadewi. Tous droits réservés.</p>
           </div>
         </div>
       </footer>

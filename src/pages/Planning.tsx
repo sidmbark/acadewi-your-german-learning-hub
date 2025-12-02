@@ -31,7 +31,11 @@ export default function Planning() {
       if (groupMember) {
         setMyGroupe(groupMember.groupes);
 
-        // Fetch cours for this group
+        // Fetch cours for this group (include yesterday)
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const yesterdayStr = yesterday.toISOString().split('T')[0];
+        
         const { data: coursData } = await supabase
           .from('cours')
           .select(`
@@ -40,7 +44,7 @@ export default function Planning() {
             profiles!cours_professeur_id_fkey(nom, prenom)
           `)
           .eq('groupe_id', groupMember.groupe_id)
-          .gte('date', new Date().toISOString().split('T')[0])
+          .gte('date', yesterdayStr)
           .order('date', { ascending: true })
           .order('heure', { ascending: true });
 
