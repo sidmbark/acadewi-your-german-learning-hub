@@ -39,7 +39,7 @@ export default function ProfDashboard() {
     groupe_id: '',
     recurrent: false,
     nombre_seances: 1,
-    frequence: 'hebdomadaire' as 'hebdomadaire' | 'mensuel',
+    frequence: 'hebdomadaire' as 'quotidien' | 'hebdomadaire' | 'mensuel',
   });
 
   const [docFormData, setDocFormData] = useState({
@@ -216,7 +216,9 @@ export default function ProfDashboard() {
           const currentDate = new Date(coursFormData.date);
           
           // Ajouter l'intervalle selon la fréquence
-          if (coursFormData.frequence === 'hebdomadaire') {
+          if (coursFormData.frequence === 'quotidien') {
+            currentDate.setDate(currentDate.getDate() + i);
+          } else if (coursFormData.frequence === 'hebdomadaire') {
             currentDate.setDate(currentDate.getDate() + (i * 7));
           } else {
             currentDate.setMonth(currentDate.getMonth() + i);
@@ -724,12 +726,13 @@ export default function ProfDashboard() {
                               <Label htmlFor="frequence">Fréquence *</Label>
                               <Select
                                 value={coursFormData.frequence}
-                                onValueChange={(value: 'hebdomadaire' | 'mensuel') => setCoursFormData({ ...coursFormData, frequence: value })}
+                                onValueChange={(value: 'quotidien' | 'hebdomadaire' | 'mensuel') => setCoursFormData({ ...coursFormData, frequence: value })}
                               >
                                 <SelectTrigger id="frequence">
                                   <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
+                                  <SelectItem value="quotidien">Quotidien (chaque jour)</SelectItem>
                                   <SelectItem value="hebdomadaire">Hebdomadaire (chaque semaine)</SelectItem>
                                   <SelectItem value="mensuel">Mensuel (chaque mois)</SelectItem>
                                 </SelectContent>
@@ -739,7 +742,7 @@ export default function ProfDashboard() {
                             <div className="bg-muted/50 p-3 rounded-lg">
                               <p className="text-sm text-muted-foreground">
                                 <strong>Aperçu:</strong> {coursFormData.nombre_seances} séances seront créées,
-                                {coursFormData.frequence === 'hebdomadaire' ? ' une par semaine' : ' une par mois'},
+                                {coursFormData.frequence === 'quotidien' ? ' une par jour' : coursFormData.frequence === 'hebdomadaire' ? ' une par semaine' : ' une par mois'},
                                 à partir du {coursFormData.date ? new Date(coursFormData.date).toLocaleDateString('fr-FR') : '...'}.
                                 <br />
                                 Un meeting Zoom unique sera généré pour chaque séance.
