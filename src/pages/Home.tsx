@@ -476,7 +476,7 @@ const Home = () => {
                     </div>
                     
                     <p className="text-muted-foreground leading-relaxed">
-                      Fort de plus de 12 ans passés en Allemagne, Youssef Ouarrak a accompagné des centaines d'étudiants dans leur 
+                      Fort de plus de 10 ans passés en Allemagne, Youssef Ouarrak a accompagné des centaines d'étudiants dans leur 
                       parcours d'apprentissage. Sa maîtrise approfondie de la langue et de la culture allemandes, combinée à sa 
                       pédagogie adaptée au contexte marocain, fait de lui un enseignant d'exception. Il prépare efficacement ses 
                       étudiants aux certifications Goethe de tous niveaux, en mettant l'accent sur la pratique orale et la 
@@ -1054,8 +1054,8 @@ const Home = () => {
                     <Phone className="h-5 w-5 text-primary mt-1" />
                     <div>
                       <p className="font-medium">Téléphone</p>
-                      <a href="tel:+212600000000" className="text-muted-foreground hover:text-primary transition-colors">
-                        +212 6XX XXX XXX
+                      <a href="tel:+212772173150" className="text-muted-foreground hover:text-primary transition-colors">
+                        +212 772-173150
                       </a>
                     </div>
                   </div>

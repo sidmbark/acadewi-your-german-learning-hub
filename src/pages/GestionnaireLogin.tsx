@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const GestionnaireLogin = () => {
-  const [email, setEmail] = useState("admin@acadewi.com");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -184,7 +184,6 @@ const GestionnaireLogin = () => {
             <ShieldCheck className="h-6 w-6 text-primary" />
             <h2 className="text-xl font-semibold">Espace Gestionnaire</h2>
           </div>
-          <p className="text-muted-foreground">Identifiants : admin@acadewi.com / admin123</p>
         </div>
 
         <Card className="border-2 shadow-xl animate-scale-in">
@@ -253,25 +252,6 @@ const GestionnaireLogin = () => {
                 )}
               </Button>
             </form>
-
-            <div className="mt-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="w-full"
-                onClick={handleCreateAdminAccount}
-                disabled={isLoading || isCreatingAdmin}
-              >
-                {isCreatingAdmin ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Création du compte...
-                  </>
-                ) : (
-                  'Créer le compte admin (première utilisation)'
-                )}
-              </Button>
-            </div>
 
             <div className="mt-6 text-center text-sm">
               <Link to="/login" className="text-primary font-semibold hover:underline">
