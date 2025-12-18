@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Users, Calendar, FileText, TrendingUp, Clock, Download, RefreshCw } from "lucide-react";
+import { BookOpen, Users, Calendar, FileText, TrendingUp, Clock, Download, RefreshCw, Brain } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -11,6 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { CoursDetailDialog } from '@/components/CoursDetailDialog';
 import { ExerciceDetailDialog } from '@/components/ExerciceDetailDialog';
 import { ZoomMeetingModal } from '@/components/ZoomMeetingModal';
+import { LevelTestDialog } from '@/components/LevelTestDialog';
 
 interface Cours {
   id: string;
@@ -84,6 +85,7 @@ const Dashboard = () => {
   });
   const [loadingData, setLoadingData] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [levelTestOpen, setLevelTestOpen] = useState(false);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -663,10 +665,15 @@ const Dashboard = () => {
           coursTitle={selectedZoomCours?.titre || ''}
         />
 
+        <LevelTestDialog
+          open={levelTestOpen}
+          onOpenChange={setLevelTestOpen}
+        />
+
         {/* Quick Actions */}
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-4">Actions rapides</h2>
-          <div className="grid md:grid-cols-3 gap-4">
+          <div className="grid md:grid-cols-4 gap-4">
             <Button variant="outline" className="h-20 justify-start gap-4" asChild>
               <Link to="/planning">
                 <Calendar className="h-6 w-6" />
@@ -675,6 +682,17 @@ const Dashboard = () => {
                   <div className="text-xs text-muted-foreground">Voir tous les cours</div>
                 </div>
               </Link>
+            </Button>
+            <Button 
+              variant="outline" 
+              className="h-20 justify-start gap-4 border-primary/50 hover:border-primary hover:bg-primary/5"
+              onClick={() => setLevelTestOpen(true)}
+            >
+              <Brain className="h-6 w-6 text-primary" />
+              <div className="text-left">
+                <div className="font-semibold text-primary">Test de Niveau</div>
+                <div className="text-xs text-muted-foreground">Évaluation IA</div>
+              </div>
             </Button>
             <Button variant="outline" className="h-20 justify-start gap-4">
               <FileText className="h-6 w-6" />
