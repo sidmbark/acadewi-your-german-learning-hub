@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { BookOpen, Users, Calendar, FileText, TrendingUp, Clock, Download, RefreshCw, Brain } from "lucide-react";
+import { BookOpen, Users, Calendar, FileText, TrendingUp, Clock, Download, RefreshCw, Brain, GraduationCap } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -61,6 +61,33 @@ interface Document {
   date_upload: string;
 }
 
+interface Evaluation {
+  id: string;
+  titre: string;
+  type: string;
+  date_limite: string | null;
+  coefficient: number;
+  note_max: number;
+  groupes: {
+    nom: string;
+    niveau: string;
+  };
+}
+
+interface Note {
+  id: string;
+  evaluation_id: string;
+  note: number;
+  commentaire: string | null;
+  date_notation: string;
+  evaluations: {
+    titre: string;
+    type: string;
+    note_max: number;
+    coefficient: number;
+  };
+}
+
 const Dashboard = () => {
   const { user, userRole, signOut, loading } = useAuth();
   const navigate = useNavigate();
@@ -76,6 +103,7 @@ const Dashboard = () => {
   const [exerciceDialogOpen, setExerciceDialogOpen] = useState(false);
   const [submissions, setSubmissions] = useState<ExerciceSubmission[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
+  const [mesNotes, setMesNotes] = useState<Note[]>([]);
   const [groupeInfo, setGroupeInfo] = useState<{ nom: string; niveau: string } | null>(null);
   const [stats, setStats] = useState({
     coursCount: 0,
@@ -230,6 +258,18 @@ const Dashboard = () => {
 
       setDocuments(accessibleDocs as any);
 
+      // Fetch notes for the student
+      const { data: notesData } = await supabase
+        .from('notes')
+        .select(`
+          *,
+          evaluations(titre, type, note_max, coefficient)
+        `)
+        .eq('etudiant_id', user?.id)
+        .order('date_notation', { ascending: false });
+
+      setMesNotes((notesData || []) as Note[]);
+
       // Calculer les statistiques
       // Compter les cours suivis
       const { count: coursCount } = await supabase
@@ -244,18 +284,14 @@ const Dashboard = () => {
         .select('*', { count: 'exact', head: true })
         .eq('etudiant_id', user?.id);
 
-      // Calculer la progression moyenne basée sur les notes des exercices corrigés
-      const { data: correctedSubmissions } = await supabase
-        .from('exercice_submissions')
-        .select('note')
-        .eq('etudiant_id', user?.id)
-        .eq('corrige', true)
-        .not('note', 'is', null);
-
+      // Calculer la progression moyenne basée sur les notes
       let progressionMoyenne = 0;
-      if (correctedSubmissions && correctedSubmissions.length > 0) {
-        const total = correctedSubmissions.reduce((acc, s) => acc + (Number(s.note) || 0), 0);
-        progressionMoyenne = Math.round((total / correctedSubmissions.length) * 5); // Convertir /20 en /100
+      if (notesData && notesData.length > 0) {
+        const total = notesData.reduce((acc: number, n: any) => {
+          const percentage = (n.note / (n.evaluations?.note_max || 20)) * 100;
+          return acc + percentage;
+        }, 0);
+        progressionMoyenne = Math.round(total / notesData.length);
       }
 
       // Calculer les heures d'apprentissage (estimation basée sur les présences)
@@ -591,6 +627,80 @@ const Dashboard = () => {
             ) : (
               <p className="text-center text-muted-foreground py-8">
                 Aucune soumission pour le moment
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Mes Notes */}
+        <Card className="border-2 mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <GraduationCap className="h-5 w-5 text-primary" />
+              Mes Notes & Évaluations
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {mesNotes.length > 0 ? (
+              <div className="space-y-3">
+                {mesNotes.map((note) => (
+                  <div key={note.id} className="flex items-center justify-between p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors border">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-1">
+                        <h4 className="font-semibold">{note.evaluations.titre}</h4>
+                        <Badge className={
+                          note.evaluations.type === 'examen' ? 'bg-destructive text-destructive-foreground' :
+                          note.evaluations.type === 'devoir' ? 'bg-primary text-primary-foreground' :
+                          'bg-secondary text-secondary-foreground'
+                        }>
+                          {note.evaluations.type}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                        <span>Coef: {note.evaluations.coefficient}</span>
+                        <span>Le {new Date(note.date_notation).toLocaleDateString('fr-FR')}</span>
+                      </div>
+                      {note.commentaire && (
+                        <p className="text-sm text-muted-foreground mt-2 italic">
+                          "{note.commentaire}"
+                        </p>
+                      )}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-2xl font-bold text-primary">
+                        {note.note}/{note.evaluations.note_max}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {Math.round((note.note / note.evaluations.note_max) * 100)}%
+                      </p>
+                    </div>
+                  </div>
+                ))}
+
+                {/* Average */}
+                {mesNotes.length > 0 && (
+                  <div className="mt-4 p-4 bg-primary/10 rounded-lg border-2 border-primary/20">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold">Moyenne pondérée</span>
+                      <span className="text-2xl font-bold text-primary">
+                        {(() => {
+                          let totalWeightedScore = 0;
+                          let totalCoef = 0;
+                          mesNotes.forEach(n => {
+                            const percentage = (n.note / n.evaluations.note_max) * 20;
+                            totalWeightedScore += percentage * n.evaluations.coefficient;
+                            totalCoef += n.evaluations.coefficient;
+                          });
+                          return totalCoef > 0 ? (totalWeightedScore / totalCoef).toFixed(2) : '0';
+                        })()}/20
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-center text-muted-foreground py-8">
+                Aucune note pour le moment
               </p>
             )}
           </CardContent>

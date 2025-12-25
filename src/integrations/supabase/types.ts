@@ -178,6 +178,53 @@ export type Database = {
           },
         ]
       }
+      evaluations: {
+        Row: {
+          coefficient: number | null
+          created_at: string
+          date_limite: string | null
+          description: string | null
+          groupe_id: string | null
+          id: string
+          note_max: number | null
+          professeur_id: string
+          titre: string
+          type: string
+        }
+        Insert: {
+          coefficient?: number | null
+          created_at?: string
+          date_limite?: string | null
+          description?: string | null
+          groupe_id?: string | null
+          id?: string
+          note_max?: number | null
+          professeur_id: string
+          titre: string
+          type: string
+        }
+        Update: {
+          coefficient?: number | null
+          created_at?: string
+          date_limite?: string | null
+          description?: string | null
+          groupe_id?: string | null
+          id?: string
+          note_max?: number | null
+          professeur_id?: string
+          titre?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evaluations_groupe_id_fkey"
+            columns: ["groupe_id"]
+            isOneToOne: false
+            referencedRelation: "groupes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exercice_submissions: {
         Row: {
           commentaire_prof: string | null
@@ -325,6 +372,44 @@ export type Database = {
           professeur_id?: string | null
         }
         Relationships: []
+      }
+      notes: {
+        Row: {
+          commentaire: string | null
+          created_at: string
+          date_notation: string | null
+          etudiant_id: string
+          evaluation_id: string
+          id: string
+          note: number | null
+        }
+        Insert: {
+          commentaire?: string | null
+          created_at?: string
+          date_notation?: string | null
+          etudiant_id: string
+          evaluation_id: string
+          id?: string
+          note?: number | null
+        }
+        Update: {
+          commentaire?: string | null
+          created_at?: string
+          date_notation?: string | null
+          etudiant_id?: string
+          evaluation_id?: string
+          id?: string
+          note?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_evaluation_id_fkey"
+            columns: ["evaluation_id"]
+            isOneToOne: false
+            referencedRelation: "evaluations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       notifications: {
         Row: {

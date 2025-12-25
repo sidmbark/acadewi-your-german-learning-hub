@@ -24,10 +24,15 @@ export default function ProfDashboard() {
   const [documents, setDocuments] = useState<any[]>([]);
   const [exercices, setExercices] = useState<any[]>([]);
   const [submissions, setSubmissions] = useState<any[]>([]);
+  const [evaluations, setEvaluations] = useState<any[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [openCours, setOpenCours] = useState(false);
   const [openDoc, setOpenDoc] = useState(false);
   const [openExercice, setOpenExercice] = useState(false);
+  const [openEvaluation, setOpenEvaluation] = useState(false);
+  const [openNotation, setOpenNotation] = useState(false);
+  const [selectedEvaluation, setSelectedEvaluation] = useState<any>(null);
   const [editingCours, setEditingCours] = useState<any>(null);
   
   const [coursFormData, setCoursFormData] = useState({
@@ -56,6 +61,16 @@ export default function ProfDashboard() {
     duree: 30,
     groupe_id: '',
     questions: [{ question: '', reponses: ['', '', '', ''], correcte: 0 }],
+  });
+
+  const [evaluationFormData, setEvaluationFormData] = useState({
+    titre: '',
+    description: '',
+    type: 'devoir' as 'devoir' | 'examen' | 'quiz',
+    date_limite: '',
+    coefficient: 1,
+    note_max: 20,
+    groupe_id: '',
   });
 
   useEffect(() => {
@@ -159,6 +174,48 @@ export default function ProfDashboard() {
           .order('date_soumission', { ascending: false });
         
         setSubmissions(submissionsData || []);
+      }
+
+      // Fetch evaluations created by this professor
+      const { data: evaluationsData } = await supabase
+        .from('evaluations')
+        .select(`
+          *,
+          groupes(nom, niveau)
+        `)
+        .eq('professeur_id', user?.id)
+        .order('created_at', { ascending: false });
+
+      setEvaluations(evaluationsData || []);
+
+      // Fetch all notes for professor's evaluations
+      if (evaluationsData && evaluationsData.length > 0) {
+        const evalIds = evaluationsData.map((e: any) => e.id);
+        
+        const { data: notesData } = await supabase
+          .from('notes')
+          .select(`
+            *,
+            evaluations(titre, type, groupe_id, note_max, coefficient)
+          `)
+          .in('evaluation_id', evalIds);
+
+        // Fetch student profiles for notes
+        if (notesData && notesData.length > 0) {
+          const notesWithProfiles = await Promise.all(
+            notesData.map(async (note: any) => {
+              const { data: profile } = await supabase
+                .from('profiles')
+                .select('nom, prenom')
+                .eq('id', note.etudiant_id)
+                .single();
+              return { ...note, profile };
+            })
+          );
+          setNotes(notesWithProfiles);
+        } else {
+          setNotes([]);
+        }
       }
 
       setLoading(false);
@@ -456,6 +513,94 @@ export default function ProfDashboard() {
     }
   };
 
+  const handleCreateEvaluation = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!evaluationFormData.titre || !evaluationFormData.groupe_id) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez remplir tous les champs obligatoires',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    try {
+      const { error } = await supabase.from('evaluations').insert({
+        titre: evaluationFormData.titre,
+        description: evaluationFormData.description,
+        type: evaluationFormData.type,
+        date_limite: evaluationFormData.date_limite || null,
+        coefficient: evaluationFormData.coefficient,
+        note_max: evaluationFormData.note_max,
+        groupe_id: evaluationFormData.groupe_id,
+        professeur_id: user?.id,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: 'L\'évaluation a été créée',
+      });
+
+      setOpenEvaluation(false);
+      setEvaluationFormData({
+        titre: '',
+        description: '',
+        type: 'devoir',
+        date_limite: '',
+        coefficient: 1,
+        note_max: 20,
+        groupe_id: '',
+      });
+      fetchData();
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const handleSaveNote = async (evaluationId: string, etudiantId: string, note: number, commentaire: string) => {
+    try {
+      // Upsert note (insert or update)
+      const { error } = await supabase
+        .from('notes')
+        .upsert({
+          evaluation_id: evaluationId,
+          etudiant_id: etudiantId,
+          note,
+          commentaire,
+          date_notation: new Date().toISOString(),
+        }, { onConflict: 'evaluation_id,etudiant_id' });
+
+      if (error) throw error;
+
+      toast({
+        title: 'Succès',
+        description: 'Note enregistrée',
+      });
+      
+      fetchData();
+    } catch (error: any) {
+      toast({
+        title: 'Erreur',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const getStudentsForGroup = (groupeId: string) => {
+    return students.filter((s: any) => {
+      // Check if student is in this group
+      return groupes.some((g: any) => g.id === groupeId);
+    });
+  };
+
   const downloadPresences = async (coursId: string, coursTitle: string) => {
     try {
       const { data, error } = await supabase
@@ -588,9 +733,10 @@ export default function ProfDashboard() {
         </div>
 
         <Tabs defaultValue="cours" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="cours">Cours</TabsTrigger>
             <TabsTrigger value="students">Étudiants</TabsTrigger>
+            <TabsTrigger value="evaluations">Évaluations</TabsTrigger>
             <TabsTrigger value="documents">Documents</TabsTrigger>
             <TabsTrigger value="exercices">Quiz/Devoirs</TabsTrigger>
             <TabsTrigger value="soumissions">Soumissions</TabsTrigger>
@@ -878,6 +1024,293 @@ export default function ProfDashboard() {
               </Table>
             </Card>
           </TabsContent>
+
+          {/* Evaluations Tab */}
+          <TabsContent value="evaluations" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <h2 className="text-xl font-bold">Évaluations & Notes</h2>
+              <Dialog open={openEvaluation} onOpenChange={setOpenEvaluation}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Créer une Évaluation
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl">
+                  <DialogHeader>
+                    <DialogTitle>Créer une Évaluation</DialogTitle>
+                  </DialogHeader>
+                  <form onSubmit={handleCreateEvaluation} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="eval-titre">Titre *</Label>
+                      <Input
+                        id="eval-titre"
+                        value={evaluationFormData.titre}
+                        onChange={(e) => setEvaluationFormData({ ...evaluationFormData, titre: e.target.value })}
+                        placeholder="Ex: Examen de mi-parcours A1"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="eval-description">Description</Label>
+                      <Textarea
+                        id="eval-description"
+                        value={evaluationFormData.description}
+                        onChange={(e) => setEvaluationFormData({ ...evaluationFormData, description: e.target.value })}
+                        placeholder="Description de l'évaluation..."
+                        rows={2}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="eval-type">Type *</Label>
+                        <Select
+                          value={evaluationFormData.type}
+                          onValueChange={(value: 'devoir' | 'examen' | 'quiz') => setEvaluationFormData({ ...evaluationFormData, type: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="devoir">Devoir</SelectItem>
+                            <SelectItem value="examen">Examen</SelectItem>
+                            <SelectItem value="quiz">Quiz</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="eval-groupe">Groupe *</Label>
+                        <Select
+                          value={evaluationFormData.groupe_id}
+                          onValueChange={(value) => setEvaluationFormData({ ...evaluationFormData, groupe_id: value })}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Sélectionner" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {groupes.map((g) => (
+                              <SelectItem key={g.id} value={g.id}>
+                                {g.nom} - {g.niveau}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="eval-date">Date limite</Label>
+                        <Input
+                          id="eval-date"
+                          type="datetime-local"
+                          value={evaluationFormData.date_limite}
+                          onChange={(e) => setEvaluationFormData({ ...evaluationFormData, date_limite: e.target.value })}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="eval-coef">Coefficient</Label>
+                        <Input
+                          id="eval-coef"
+                          type="number"
+                          min="0.5"
+                          max="10"
+                          step="0.5"
+                          value={evaluationFormData.coefficient}
+                          onChange={(e) => setEvaluationFormData({ ...evaluationFormData, coefficient: parseFloat(e.target.value) })}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="eval-max">Note max</Label>
+                        <Input
+                          id="eval-max"
+                          type="number"
+                          min="10"
+                          max="100"
+                          value={evaluationFormData.note_max}
+                          onChange={(e) => setEvaluationFormData({ ...evaluationFormData, note_max: parseInt(e.target.value) })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-4">
+                      <Button type="button" variant="outline" onClick={() => setOpenEvaluation(false)}>
+                        Annuler
+                      </Button>
+                      <Button type="submit">Créer l'évaluation</Button>
+                    </div>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+
+            {/* Evaluations List */}
+            <div className="grid gap-4">
+              {evaluations.length > 0 ? (
+                evaluations.map((evaluation: any) => (
+                  <Card key={evaluation.id} className="p-6">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <div className="flex items-center gap-3">
+                          <h3 className="font-semibold text-lg">{evaluation.titre}</h3>
+                          <Badge className={
+                            evaluation.type === 'examen' ? 'bg-destructive text-destructive-foreground' :
+                            evaluation.type === 'devoir' ? 'bg-primary text-primary-foreground' :
+                            'bg-secondary text-secondary-foreground'
+                          }>
+                            {evaluation.type}
+                          </Badge>
+                        </div>
+                        {evaluation.description && (
+                          <p className="text-sm text-muted-foreground mt-1">{evaluation.description}</p>
+                        )}
+                        <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
+                          <span>{evaluation.groupes?.nom} - {evaluation.groupes?.niveau}</span>
+                          <span>Note max: {evaluation.note_max}</span>
+                          <span>Coef: {evaluation.coefficient}</span>
+                          {evaluation.date_limite && (
+                            <span>Limite: {new Date(evaluation.date_limite).toLocaleDateString('fr-FR')}</span>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        onClick={() => {
+                          setSelectedEvaluation(evaluation);
+                          setOpenNotation(true);
+                        }}
+                      >
+                        Noter les étudiants
+                      </Button>
+                    </div>
+
+                    {/* Notes for this evaluation */}
+                    {notes.filter((n: any) => n.evaluation_id === evaluation.id).length > 0 && (
+                      <div className="border-t pt-4">
+                        <h4 className="font-medium mb-2 text-sm">Notes attribuées:</h4>
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                          {notes
+                            .filter((n: any) => n.evaluation_id === evaluation.id)
+                            .map((note: any) => (
+                              <div key={note.id} className="bg-muted/50 p-2 rounded text-sm">
+                                <span className="font-medium">{note.profile?.prenom} {note.profile?.nom}</span>
+                                <span className="ml-2 text-primary font-bold">{note.note}/{evaluation.note_max}</span>
+                              </div>
+                            ))
+                          }
+                        </div>
+                      </div>
+                    )}
+                  </Card>
+                ))
+              ) : (
+                <Card className="p-8 text-center">
+                  <p className="text-muted-foreground">Aucune évaluation créée. Créez votre première évaluation pour commencer à noter vos étudiants.</p>
+                </Card>
+              )}
+            </div>
+          </TabsContent>
+
+          {/* Notation Dialog */}
+          <Dialog open={openNotation} onOpenChange={setOpenNotation}>
+            <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>
+                  Noter les étudiants - {selectedEvaluation?.titre}
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div className="bg-muted/50 p-3 rounded-lg text-sm">
+                  <span className="font-medium">Groupe:</span> {selectedEvaluation?.groupes?.nom} | 
+                  <span className="font-medium ml-2">Note max:</span> {selectedEvaluation?.note_max} | 
+                  <span className="font-medium ml-2">Coefficient:</span> {selectedEvaluation?.coefficient}
+                </div>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Étudiant</TableHead>
+                      <TableHead>Note</TableHead>
+                      <TableHead>Commentaire</TableHead>
+                      <TableHead>Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {students.map((student: any) => {
+                      const existingNote = notes.find(
+                        (n: any) => n.evaluation_id === selectedEvaluation?.id && n.etudiant_id === student.id
+                      );
+                      return (
+                        <TableRow key={student.id}>
+                          <TableCell className="font-medium">
+                            {student.prenom} {student.nom}
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              id={`note-${student.id}`}
+                              type="number"
+                              min="0"
+                              max={selectedEvaluation?.note_max || 20}
+                              step="0.5"
+                              defaultValue={existingNote?.note || ''}
+                              className="w-20"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Input
+                              id={`comment-${student.id}`}
+                              type="text"
+                              defaultValue={existingNote?.commentaire || ''}
+                              placeholder="Commentaire..."
+                              className="w-full"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              size="sm"
+                              onClick={() => {
+                                const noteInput = document.getElementById(`note-${student.id}`) as HTMLInputElement;
+                                const commentInput = document.getElementById(`comment-${student.id}`) as HTMLInputElement;
+                                const noteValue = parseFloat(noteInput.value);
+                                
+                                if (isNaN(noteValue)) {
+                                  toast({
+                                    title: 'Erreur',
+                                    description: 'Veuillez entrer une note valide',
+                                    variant: 'destructive',
+                                  });
+                                  return;
+                                }
+                                
+                                handleSaveNote(
+                                  selectedEvaluation.id,
+                                  student.id,
+                                  noteValue,
+                                  commentInput.value
+                                );
+                              }}
+                            >
+                              Enregistrer
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+
+                <div className="flex justify-end pt-4">
+                  <Button variant="outline" onClick={() => setOpenNotation(false)}>
+                    Fermer
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
 
           {/* Documents Tab */}
           <TabsContent value="documents" className="space-y-4">
