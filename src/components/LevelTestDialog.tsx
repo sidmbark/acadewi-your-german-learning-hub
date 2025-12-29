@@ -849,15 +849,21 @@ export function LevelTestDialog({ open, onOpenChange }: LevelTestDialogProps) {
                         Scores par catégorie
                       </h4>
                       <div className="space-y-3">
-                        {Object.entries(writtenEvaluation.categoryScores).map(([category, score]) => (
-                          <div key={category} className="space-y-1">
-                            <div className="flex justify-between text-sm">
-                              <span className="capitalize">{category.replace('_', ' ')}</span>
-                              <span className="font-semibold">{score}%</span>
+                        {Object.entries(writtenEvaluation.categoryScores).map(([category, scoreValue]) => {
+                          // Handle both number and object score formats
+                          const score = typeof scoreValue === 'object' && scoreValue !== null 
+                            ? (scoreValue as any).percentage || (scoreValue as any).score || 0
+                            : Number(scoreValue) || 0;
+                          return (
+                            <div key={category} className="space-y-1">
+                              <div className="flex justify-between text-sm">
+                                <span className="capitalize">{category.replace('_', ' ')}</span>
+                                <span className="font-semibold">{score}%</span>
+                              </div>
+                              <Progress value={score} className="h-2" />
                             </div>
-                            <Progress value={score} className="h-2" />
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
