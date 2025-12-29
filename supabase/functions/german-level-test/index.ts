@@ -11,7 +11,8 @@ serve(async (req) => {
   }
 
   try {
-    const { action, answers, currentLevel, questionTypes, difficulty, voiceText, expectedText, previousAnswers } = await req.json();
+    const body = await req.json();
+    const { action, answers, currentLevel, questionTypes, difficulty, voiceText, expectedText, previousAnswers, writtenResults, oralResults } = body;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -427,7 +428,7 @@ Réponds UNIQUEMENT avec un JSON valide:
 
     // Action: Generate global report combining written and oral
     if (action === "generate_global_report") {
-      const { writtenResults, oralResults } = await req.json();
+      // writtenResults and oralResults are already extracted from the body at the top
       
       const systemPrompt = `Tu es un expert en évaluation linguistique selon le CECR.
 
