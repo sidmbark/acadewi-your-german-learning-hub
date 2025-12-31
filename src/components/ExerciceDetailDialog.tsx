@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, FileText } from 'lucide-react';
+import { Upload, FileText, Download } from 'lucide-react';
 
 interface ExerciceDetailDialogProps {
   exercice: {
@@ -29,10 +29,48 @@ export function ExerciceDetailDialog({ exercice, open, onOpenChange, userId, onS
   const [reponses, setReponses] = useState<Record<number, any>>({});
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   if (!exercice) return null;
 
   const questions = Array.isArray(exercice.questions) ? exercice.questions : [];
+
+  const handleDownloadPDF = async () => {
+    if (!exercice.fichier_url) return;
+    
+    try {
+      setDownloading(true);
+      
+      // Fetch the file
+      const response = await fetch(exercice.fichier_url);
+      if (!response.ok) throw new Error('Erreur lors du téléchargement');
+      
+      const blob = await response.blob();
+      
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${exercice.titre}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: 'Téléchargement réussi',
+        description: 'Le fichier a été téléchargé',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erreur de téléchargement',
+        description: error.message || 'Impossible de télécharger le fichier',
+        variant: 'destructive',
+      });
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   const handleReponseChange = (questionIndex: number, value: any) => {
     setReponses(prev => ({
@@ -128,9 +166,13 @@ export function ExerciceDetailDialog({ exercice, open, onOpenChange, userId, onS
                     <p className="text-sm text-muted-foreground">Téléchargez et résolvez l'exercice</p>
                   </div>
                 </div>
-                <Button onClick={() => window.open(exercice.fichier_url!, '_blank')} variant="default">
-                  <Upload className="h-4 w-4 mr-2 rotate-180" />
-                  Télécharger le PDF
+                <Button 
+                  onClick={handleDownloadPDF} 
+                  variant="default"
+                  disabled={downloading}
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  {downloading ? 'Téléchargement...' : 'Télécharger le PDF'}
                 </Button>
               </div>
             </div>
