@@ -7,6 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useGamification } from '@/hooks/useGamification';
 import { Upload, FileText, Download } from 'lucide-react';
 
 interface ExerciceDetailDialogProps {
@@ -26,6 +27,7 @@ interface ExerciceDetailDialogProps {
 
 export function ExerciceDetailDialog({ exercice, open, onOpenChange, userId, onSubmitSuccess }: ExerciceDetailDialogProps) {
   const { toast } = useToast();
+  const { addXP } = useGamification();
   const [reponses, setReponses] = useState<Record<number, any>>({});
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [submitting, setSubmitting] = useState(false);
@@ -120,6 +122,9 @@ export function ExerciceDetailDialog({ exercice, open, onOpenChange, userId, onS
         });
 
       if (error) throw error;
+
+      // Award XP for submitting exercise
+      await addXP(userId, 'exercice_soumis');
 
       toast({
         title: 'Succès',
