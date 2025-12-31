@@ -349,6 +349,34 @@ const Dashboard = () => {
     setZoomMeetingOpen(true);
   };
 
+  const handleDownloadExercice = async (fichierUrl: string, titre: string) => {
+    try {
+      const response = await fetch(fichierUrl);
+      if (!response.ok) throw new Error('Erreur lors du téléchargement');
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${titre}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      
+      toast({
+        title: 'Téléchargement réussi',
+        description: 'Le fichier a été téléchargé',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erreur de téléchargement',
+        description: error.message || 'Impossible de télécharger le fichier',
+        variant: 'destructive',
+      });
+    }
+  };
+
   const handleCoursClick = (cours: Cours) => {
     setSelectedCours(cours);
     setCoursDialogOpen(true);
@@ -587,7 +615,7 @@ const Dashboard = () => {
                         <Button 
                           variant="outline" 
                           size="sm"
-                          onClick={() => window.open(exercise.fichier_url!, '_blank')}
+                          onClick={() => handleDownloadExercice(exercise.fichier_url!, exercise.titre)}
                         >
                           <Download className="h-4 w-4 mr-1" />
                           Voir l'énoncé
