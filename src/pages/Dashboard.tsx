@@ -12,6 +12,8 @@ import { CoursDetailDialog } from '@/components/CoursDetailDialog';
 import { ExerciceDetailDialog } from '@/components/ExerciceDetailDialog';
 import { ZoomMeetingModal } from '@/components/ZoomMeetingModal';
 import { LevelTestDialog } from '@/components/LevelTestDialog';
+import { GamificationPanel } from '@/components/GamificationPanel';
+import { GermanDictionary } from '@/components/GermanDictionary';
 
 interface Cours {
   id: string;
