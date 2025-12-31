@@ -1,1 +1,13 @@
 project_id = "jtzytcvsmfejjwagwzzm"
+
+[functions.create-zoom-meeting]
+verify_jwt = true
+
+[functions.german-level-test]
+verify_jwt = false
+
+[functions.german-dictionary]
+verify_jwt = false
+
+[functions.german-tts]
+verify_jwt = false

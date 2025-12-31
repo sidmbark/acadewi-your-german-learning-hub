@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      badges: {
+        Row: {
+          condition_type: string
+          condition_value: number
+          created_at: string | null
+          description: string
+          icone: string
+          id: string
+          nom: string
+          xp_reward: number
+        }
+        Insert: {
+          condition_type: string
+          condition_value: number
+          created_at?: string | null
+          description: string
+          icone: string
+          id?: string
+          nom: string
+          xp_reward?: number
+        }
+        Update: {
+          condition_type?: string
+          condition_value?: number
+          created_at?: string | null
+          description?: string
+          icone?: string
+          id?: string
+          nom?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
       contact_messages: {
         Row: {
           created_at: string
@@ -553,6 +586,80 @@ export type Database = {
           },
         ]
       }
+      user_badges: {
+        Row: {
+          badge_id: string
+          date_obtention: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          date_obtention?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          date_obtention?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_gamification: {
+        Row: {
+          cours_suivis: number
+          created_at: string | null
+          derniere_activite: string | null
+          exercices_completes: number
+          id: string
+          meilleur_streak: number
+          niveau: number
+          notes_parfaites: number
+          streak_actuel: number
+          updated_at: string | null
+          user_id: string
+          xp_total: number
+        }
+        Insert: {
+          cours_suivis?: number
+          created_at?: string | null
+          derniere_activite?: string | null
+          exercices_completes?: number
+          id?: string
+          meilleur_streak?: number
+          niveau?: number
+          notes_parfaites?: number
+          streak_actuel?: number
+          updated_at?: string | null
+          user_id: string
+          xp_total?: number
+        }
+        Update: {
+          cours_suivis?: number
+          created_at?: string | null
+          derniere_activite?: string | null
+          exercices_completes?: number
+          id?: string
+          meilleur_streak?: number
+          niveau?: number
+          notes_parfaites?: number
+          streak_actuel?: number
+          updated_at?: string | null
+          user_id?: string
+          xp_total?: number
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -568,6 +675,30 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      xp_history: {
+        Row: {
+          created_at: string | null
+          id: string
+          raison: string
+          user_id: string
+          xp_gagne: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          raison: string
+          user_id: string
+          xp_gagne: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          raison?: string
+          user_id?: string
+          xp_gagne?: number
         }
         Relationships: []
       }
