@@ -14,6 +14,7 @@ import { ZoomMeetingModal } from '@/components/ZoomMeetingModal';
 import { LevelTestDialog } from '@/components/LevelTestDialog';
 import { GamificationPanel } from '@/components/GamificationPanel';
 import { GermanDictionary } from '@/components/GermanDictionary';
+import { useGamification } from '@/hooks/useGamification';
 
 interface Cours {
   id: string;
@@ -136,6 +137,9 @@ const Dashboard = () => {
     if (user && userRole === 'etudiant') {
       fetchDashboardData();
       
+      // Record daily login for gamification
+      recordDailyLoginAsync(user.id);
+      
       // Auto-refresh every 30 seconds
       const interval = setInterval(() => {
         fetchDashboardData();
@@ -144,6 +148,12 @@ const Dashboard = () => {
       return () => clearInterval(interval);
     }
   }, [user, userRole, loading, navigate]);
+
+  // Separate async function for daily login
+  const recordDailyLoginAsync = async (userId: string) => {
+    const { recordDailyLogin } = useGamification();
+    await recordDailyLogin(userId);
+  };
 
   const fetchDashboardData = async (showRefreshIndicator = false) => {
     try {
