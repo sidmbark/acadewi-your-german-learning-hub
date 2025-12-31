@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { BookOpen, Users, Award, Clock, CheckCircle2, Star, ArrowRight, MessageCircle, Sparkles, Brain, TrendingUp, Mail, Phone, Send } from "lucide-react";
+import { BookOpen, Users, Award, Clock, CheckCircle2, Star, ArrowRight, MessageCircle, Sparkles, Brain, TrendingUp, Mail, Phone, Send, Target, Gift, Zap } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -12,8 +12,10 @@ import youssefPhoto from "@/assets/youssef-ouarrak.png";
 import workshop1 from "@/assets/workshop-1.jpeg";
 import workshop2 from "@/assets/workshop-2.jpeg";
 import { supabase } from "@/integrations/supabase/client";
+import { LevelTestDialog } from "@/components/LevelTestDialog";
 
 const Home = () => {
+  const [levelTestOpen, setLevelTestOpen] = useState(false);
   const features = [
     {
       icon: BookOpen,
@@ -187,6 +189,13 @@ const Home = () => {
             <a href="#benefits" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
               Avantages
             </a>
+            <button 
+              onClick={() => setLevelTestOpen(true)}
+              className="text-sm font-medium text-primary hover:text-primary/80 transition-colors flex items-center gap-1"
+            >
+              <Brain className="h-4 w-4" />
+              Test Gratuit
+            </button>
             <a href="#faq" className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors">
               FAQ
             </a>
@@ -732,6 +741,101 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Free Level Test Section */}
+      <section id="level-test" className="py-20 bg-gradient-to-br from-primary/10 via-secondary/5 to-primary/10 relative overflow-hidden">
+        {/* Background decorations */}
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute top-10 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-10 right-10 w-96 h-96 bg-secondary/20 rounded-full blur-3xl" />
+        </div>
+        
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="max-w-4xl mx-auto text-center space-y-8">
+            {/* Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-full text-sm font-semibold animate-pulse">
+              <Gift className="h-4 w-4" />
+              100% Gratuit - Aucune inscription requise
+            </div>
+            
+            {/* Title */}
+            <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold">
+              Découvrez votre <span className="text-gradient-primary">niveau d'allemand</span> en 5 minutes
+            </h2>
+            
+            {/* Description */}
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              Notre test intelligent propulsé par l'IA évalue vos compétences écrites et orales pour vous recommander le niveau de cours idéal.
+            </p>
+            
+            {/* Features Grid */}
+            <div className="grid sm:grid-cols-3 gap-6 max-w-3xl mx-auto py-8">
+              <Card className="border-2 border-primary/20 bg-background/80 backdrop-blur hover:border-primary hover:shadow-lg transition-all duration-300">
+                <CardContent className="p-6 text-center space-y-3">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
+                    <Brain className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-semibold">Test Adaptatif IA</h3>
+                  <p className="text-sm text-muted-foreground">Questions ajustées selon vos réponses</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-2 border-secondary/20 bg-background/80 backdrop-blur hover:border-secondary hover:shadow-lg transition-all duration-300">
+                <CardContent className="p-6 text-center space-y-3">
+                  <div className="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto">
+                    <Target className="h-6 w-6 text-secondary" />
+                  </div>
+                  <h3 className="font-semibold">Niveau CECRL</h3>
+                  <p className="text-sm text-muted-foreground">Résultat précis de A1 à C2</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-2 border-success/20 bg-background/80 backdrop-blur hover:border-success hover:shadow-lg transition-all duration-300">
+                <CardContent className="p-6 text-center space-y-3">
+                  <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto">
+                    <Zap className="h-6 w-6 text-success" />
+                  </div>
+                  <h3 className="font-semibold">Résultats Instantanés</h3>
+                  <p className="text-sm text-muted-foreground">Rapport détaillé immédiat</p>
+                </CardContent>
+              </Card>
+            </div>
+            
+            {/* CTA Button */}
+            <div className="space-y-4">
+              <Button 
+                onClick={() => setLevelTestOpen(true)}
+                size="lg" 
+                variant="hero" 
+                className="text-xl px-12 py-8 shadow-2xl hover:shadow-primary/25 transition-all duration-300 hover:scale-105"
+              >
+                <Brain className="mr-3 h-6 w-6" />
+                Passer le test gratuit maintenant
+                <ArrowRight className="ml-3 h-6 w-6" />
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                ✓ Sans inscription &nbsp; ✓ Résultat immédiat &nbsp; ✓ Recommandation personnalisée
+              </p>
+            </div>
+            
+            {/* Trust indicators */}
+            <div className="flex flex-wrap items-center justify-center gap-6 pt-6 text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-success" />
+                <span>+500 tests passés</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Star className="h-5 w-5 text-warning fill-warning" />
+                <span>4.9/5 de satisfaction</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-primary" />
+                <span>Conforme CECRL</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing Transparency Section */}
       <section className="py-20 bg-gradient-to-br from-primary/5 via-secondary/5 to-primary/5">
         <div className="container mx-auto px-4">
@@ -1148,6 +1252,9 @@ const Home = () => {
           </div>
         </div>
       </footer>
+
+      {/* Level Test Dialog */}
+      <LevelTestDialog open={levelTestOpen} onOpenChange={setLevelTestOpen} />
     </div>
   );
 };
