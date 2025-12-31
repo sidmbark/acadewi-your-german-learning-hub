@@ -13,6 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { StudentFeedback } from '@/components/StudentFeedback';
+import { ChatPanel } from '@/components/ChatPanel';
 import { Calendar, Plus, Users, BookOpen, LogOut, FileText, Upload, Download, Edit2, Trash2 } from 'lucide-react';
 
 export default function ProfDashboard() {
@@ -1839,6 +1840,9 @@ export default function ProfDashboard() {
             </div>
           </TabsContent>
         </Tabs>
+
+        {/* Chat Panel */}
+        <ChatPanel userId={user?.id || ''} userRole="professeur" />
       </main>
     </div>
   );
