@@ -33,6 +33,8 @@ interface Exercice {
   type: string;
   duree: number;
   questions: any;
+  fichier_url: string | null;
+  date_creation: string;
 }
 
 interface ExerciceSubmission {
@@ -556,23 +558,48 @@ const Dashboard = () => {
             <CardContent className="space-y-3">
               {exercices.length > 0 ? (
                 exercices.map((exercise) => (
-                  <div key={exercise.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg hover:bg-muted transition-colors">
-                    <div className="flex-1">
-                      <h4 className="font-medium text-sm">{exercise.titre}</h4>
-                      <div className="flex items-center gap-3 mt-1">
-                        <span className="text-xs text-muted-foreground">{exercise.type}</span>
-                        {exercise.duree && (
-                          <span className="text-xs text-muted-foreground">{exercise.duree} min</span>
-                        )}
+                  <div key={exercise.id} className="p-4 bg-muted/50 rounded-lg hover:bg-muted transition-colors border">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className="font-semibold">{exercise.titre}</h4>
+                          <Badge className={
+                            exercise.type === 'examen' ? 'bg-destructive text-destructive-foreground' :
+                            exercise.type === 'devoir' ? 'bg-primary text-primary-foreground' :
+                            'bg-secondary text-secondary-foreground'
+                          }>
+                            {exercise.type}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                          {exercise.duree && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {exercise.duree} min
+                            </span>
+                          )}
+                          <span>Créé le {new Date(exercise.date_creation).toLocaleDateString('fr-FR')}</span>
+                        </div>
                       </div>
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm"
-                      onClick={() => handleExerciceClick(exercise)}
-                    >
-                      Commencer
-                    </Button>
+                    <div className="flex items-center gap-2 mt-3">
+                      {exercise.fichier_url && (
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => window.open(exercise.fichier_url!, '_blank')}
+                        >
+                          <Download className="h-4 w-4 mr-1" />
+                          Voir l'énoncé
+                        </Button>
+                      )}
+                      <Button 
+                        size="sm"
+                        onClick={() => handleExerciceClick(exercise)}
+                      >
+                        Soumettre mon travail
+                      </Button>
+                    </div>
                   </div>
                 ))
               ) : (

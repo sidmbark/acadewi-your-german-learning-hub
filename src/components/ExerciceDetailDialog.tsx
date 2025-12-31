@@ -16,6 +16,7 @@ interface ExerciceDetailDialogProps {
     type: string;
     duree: number;
     questions: any;
+    fichier_url?: string | null;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -108,59 +109,92 @@ export function ExerciceDetailDialog({ exercice, open, onOpenChange, userId, onS
         <DialogHeader>
           <DialogTitle className="text-2xl">{exercice.titre}</DialogTitle>
           <div className="flex gap-4 text-sm text-muted-foreground mt-2">
-            <span className="px-3 py-1 bg-primary/10 rounded-full">{exercice.type}</span>
+            <span className="px-3 py-1 bg-primary/10 rounded-full capitalize">{exercice.type}</span>
             {exercice.duree && <span className="px-3 py-1 bg-secondary/10 rounded-full">{exercice.duree} min</span>}
           </div>
         </DialogHeader>
 
         <div className="space-y-6 mt-6">
-          {questions.map((q: any, index: number) => (
-            <div key={index} className="p-4 bg-muted/50 rounded-lg border">
-              <Label className="text-base font-semibold mb-3 block">
-                Question {index + 1}: {q.question}
-              </Label>
-
-              {exercice.type === 'quiz' && Array.isArray(q.reponses) ? (
-                <RadioGroup
-                  value={reponses[index]?.toString()}
-                  onValueChange={(value) => handleReponseChange(index, parseInt(value))}
-                >
-                  {q.reponses.map((rep: string, repIndex: number) => (
-                    <div key={repIndex} className="flex items-center space-x-2 mb-2">
-                      <RadioGroupItem value={repIndex.toString()} id={`q${index}-r${repIndex}`} />
-                      <Label htmlFor={`q${index}-r${repIndex}`} className="cursor-pointer">
-                        {rep}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              ) : (
-                <Textarea
-                  value={reponses[index] || ''}
-                  onChange={(e) => handleReponseChange(index, e.target.value)}
-                  placeholder="Votre réponse..."
-                  rows={4}
-                  className="mt-2"
-                />
-              )}
+          {/* Fichier PDF de l'exercice */}
+          {exercice.fichier_url && (
+            <div className="bg-primary/10 p-4 rounded-lg border-2 border-primary/20">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/20 rounded-lg">
+                    <FileText className="h-6 w-6 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold">Fichier de l'exercice</h3>
+                    <p className="text-sm text-muted-foreground">Téléchargez et résolvez l'exercice</p>
+                  </div>
+                </div>
+                <Button onClick={() => window.open(exercice.fichier_url!, '_blank')} variant="default">
+                  <Upload className="h-4 w-4 mr-2 rotate-180" />
+                  Télécharger le PDF
+                </Button>
+              </div>
             </div>
-          ))}
+          )}
 
-          <div className="border-t pt-4">
-            <Label className="text-base font-semibold mb-3 block">
-              <FileText className="inline mr-2 h-4 w-4" />
-              Fichiers supplémentaires (optionnel)
-            </Label>
+          {/* Questions inline (si présentes) */}
+          {questions.length > 0 && (
+            <>
+              <h3 className="font-semibold text-lg">Questions</h3>
+              {questions.map((q: any, index: number) => (
+                <div key={index} className="p-4 bg-muted/50 rounded-lg border">
+                  <Label className="text-base font-semibold mb-3 block">
+                    Question {index + 1}: {q.question}
+                  </Label>
+
+                  {exercice.type === 'quiz' && Array.isArray(q.reponses) ? (
+                    <RadioGroup
+                      value={reponses[index]?.toString()}
+                      onValueChange={(value) => handleReponseChange(index, parseInt(value))}
+                    >
+                      {q.reponses.map((rep: string, repIndex: number) => (
+                        <div key={repIndex} className="flex items-center space-x-2 mb-2">
+                          <RadioGroupItem value={repIndex.toString()} id={`q${index}-r${repIndex}`} />
+                          <Label htmlFor={`q${index}-r${repIndex}`} className="cursor-pointer">
+                            {rep}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                  ) : (
+                    <Textarea
+                      value={reponses[index] || ''}
+                      onChange={(e) => handleReponseChange(index, e.target.value)}
+                      placeholder="Votre réponse..."
+                      rows={4}
+                      className="mt-2"
+                    />
+                  )}
+                </div>
+              ))}
+            </>
+          )}
+
+          {/* Section de soumission PDF */}
+          <div className="border-2 border-dashed border-primary/30 rounded-lg p-6 bg-muted/30">
+            <div className="text-center mb-4">
+              <Upload className="h-10 w-10 text-primary mx-auto mb-2" />
+              <h3 className="font-semibold text-lg">Soumettre votre travail</h3>
+              <p className="text-sm text-muted-foreground">
+                Uploadez le fichier PDF contenant votre exercice résolu
+              </p>
+            </div>
+            
             <div className="flex flex-col gap-3">
               <Input
                 type="file"
-                multiple
+                accept=".pdf,.doc,.docx"
                 onChange={handleFileChange}
                 className="cursor-pointer"
               />
               {uploadedFiles.length > 0 && (
-                <div className="text-sm text-muted-foreground">
-                  {uploadedFiles.length} fichier(s) sélectionné(s)
+                <div className="bg-success/10 p-3 rounded-lg flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-success" />
+                  <span className="text-sm font-medium">{uploadedFiles.length} fichier(s) sélectionné(s)</span>
                 </div>
               )}
             </div>
@@ -171,8 +205,11 @@ export function ExerciceDetailDialog({ exercice, open, onOpenChange, userId, onS
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Annuler
           </Button>
-          <Button onClick={handleSubmit} disabled={submitting}>
-            {submitting ? 'Soumission...' : 'Soumettre'}
+          <Button 
+            onClick={handleSubmit} 
+            disabled={submitting || uploadedFiles.length === 0}
+          >
+            {submitting ? 'Soumission en cours...' : 'Soumettre mon travail'}
           </Button>
         </div>
       </DialogContent>
