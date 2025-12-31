@@ -15,6 +15,7 @@ import { LevelTestDialog } from '@/components/LevelTestDialog';
 import { GamificationPanel } from '@/components/GamificationPanel';
 import { GermanDictionary } from '@/components/GermanDictionary';
 import { useGamification } from '@/hooks/useGamification';
+import { ChatPanel } from '@/components/ChatPanel';
 
 interface Cours {
   id: string;
@@ -119,6 +120,7 @@ const Dashboard = () => {
   const [loadingData, setLoadingData] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [levelTestOpen, setLevelTestOpen] = useState(false);
+  const [professors, setProfessors] = useState<{ id: string; nom: string; prenom: string }[]>([]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -314,6 +316,21 @@ const Dashboard = () => {
         heuresApprentissage,
         progressionMoyenne,
       });
+
+      // Fetch professors for chat
+      const { data: profsData } = await supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('role', 'professeur');
+
+      if (profsData && profsData.length > 0) {
+        const profIds = profsData.map(p => p.user_id);
+        const { data: profProfiles } = await supabase
+          .from('profiles')
+          .select('id, nom, prenom')
+          .in('id', profIds);
+        setProfessors(profProfiles || []);
+      }
 
       setLoadingData(false);
       setRefreshing(false);
@@ -890,6 +907,9 @@ const Dashboard = () => {
             </Button>
           </div>
         </div>
+
+        {/* Chat Panel */}
+        <ChatPanel userId={user?.id || ''} userRole="etudiant" professors={professors} />
       </div>
     </div>
   );
