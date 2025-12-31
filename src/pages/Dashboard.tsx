@@ -834,6 +834,12 @@ const Dashboard = () => {
           onOpenChange={setLevelTestOpen}
         />
 
+        {/* Gamification & Dictionary */}
+        <div className="grid lg:grid-cols-2 gap-6 mb-8">
+          <GamificationPanel userId={user?.id || ''} />
+          <GermanDictionary />
+        </div>
+
         {/* Quick Actions */}
         <div className="mt-8">
           <h2 className="text-2xl font-bold mb-4">Actions rapides</h2>
