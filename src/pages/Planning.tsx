@@ -35,17 +35,20 @@ export default function Planning() {
         yesterday.setDate(yesterday.getDate() - 1);
         const yesterdayStr = yesterday.toISOString().split('T')[0];
         
-        const { data: coursData } = await supabase
+        const { data: coursData, error } = await supabase
           .from('cours')
           .select(`
             *,
-            groupes(nom, niveau),
-            profiles!cours_professeur_id_fkey(nom, prenom)
+            groupes(nom, niveau)
           `)
           .eq('groupe_id', groupMember.groupe_id)
           .gte('date', yesterdayStr)
           .order('date', { ascending: true })
           .order('heure', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching cours:', error);
+        }
 
         setCours(coursData || []);
       }
