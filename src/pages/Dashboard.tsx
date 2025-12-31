@@ -273,34 +273,31 @@ const Dashboard = () => {
       setMesNotes((notesData || []) as Note[]);
 
       // Calculer les statistiques
-      // Compter les cours suivis
-      const { count: coursCount } = await supabase
-        .from('presences')
+      // Compter TOUS les cours du groupe de l'étudiant (cours suivis = cours assignés au groupe)
+      const { count: totalCoursGroupe } = await supabase
+        .from('cours')
         .select('*', { count: 'exact', head: true })
-        .eq('etudiant_id', user?.id)
-        .eq('present', true);
+        .eq('groupe_id', groupMember.groupe_id);
 
-      // Compter les exercices soumis (au lieu de progression)
+      // Compter les exercices soumis
       const { count: exercicesCompleted } = await supabase
         .from('exercice_submissions')
         .select('*', { count: 'exact', head: true })
         .eq('etudiant_id', user?.id);
 
-      // Calculer la progression moyenne basée sur les notes
-      let progressionMoyenne = 0;
-      if (notesData && notesData.length > 0) {
-        const total = notesData.reduce((acc: number, n: any) => {
-          const percentage = (n.note / (n.evaluations?.note_max || 20)) * 100;
-          return acc + percentage;
-        }, 0);
-        progressionMoyenne = Math.round(total / notesData.length);
-      }
+      // Heures d'apprentissage = nombre de cours * 2h par séance
+      const heuresApprentissage = (totalCoursGroupe || 0) * 2;
 
-      // Calculer les heures d'apprentissage (estimation basée sur les présences)
-      const heuresApprentissage = (coursCount || 0) * 2; // Estimation de 2h par cours
+      // Progression = (cours suivis / cours totaux de la formation) * 100
+      // Formation de 8 mois, 4 séances par semaine = 8 * 4 * 4 = 128 séances au total
+      const TOTAL_SEANCES_FORMATION = 128;
+      const progressionMoyenne = Math.min(
+        Math.round(((totalCoursGroupe || 0) / TOTAL_SEANCES_FORMATION) * 100),
+        100
+      );
 
       setStats({
-        coursCount: coursCount || 0,
+        coursCount: totalCoursGroupe || 0,
         exercicesCompleted: exercicesCompleted || 0,
         heuresApprentissage,
         progressionMoyenne,
