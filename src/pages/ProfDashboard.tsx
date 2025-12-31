@@ -57,11 +57,13 @@ export default function ProfDashboard() {
 
   const [exerciceFormData, setExerciceFormData] = useState({
     titre: '',
-    type: 'quiz',
-    duree: 30,
+    type: 'devoir',
+    duree: 60,
     groupe_id: '',
-    questions: [{ question: '', reponses: ['', '', '', ''], correcte: 0 }],
+    description: '',
   });
+  const [exerciceFile, setExerciceFile] = useState<File | null>(null);
+  const [uploadingExercice, setUploadingExercice] = useState(false);
 
   const [evaluationFormData, setEvaluationFormData] = useState({
     titre: '',
@@ -479,30 +481,86 @@ export default function ProfDashboard() {
   const handleCreateExercice = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    if (!exerciceFormData.titre || !exerciceFormData.groupe_id) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez remplir tous les champs obligatoires',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!exerciceFile) {
+      toast({
+        title: 'Erreur',
+        description: 'Veuillez uploader le fichier PDF de l\'exercice',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     try {
-      const { error } = await supabase.from('exercices').insert({
+      setUploadingExercice(true);
+
+      // Upload file to Supabase Storage
+      const fileExt = exerciceFile.name.split('.').pop();
+      const fileName = `exercice_${Date.now()}.${fileExt}`;
+      const filePath = `exercices/${user?.id}/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('documents')
+        .upload(filePath, exerciceFile);
+
+      if (uploadError) throw uploadError;
+
+      // Get public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('documents')
+        .getPublicUrl(filePath);
+
+      // Insert exercice into database
+      const { data: exerciceData, error } = await supabase.from('exercices').insert({
         titre: exerciceFormData.titre,
         type: exerciceFormData.type,
         duree: exerciceFormData.duree,
         groupe_id: exerciceFormData.groupe_id,
-        questions: exerciceFormData.questions,
-      });
+        fichier_url: publicUrl,
+        professeur_id: user?.id,
+        questions: [],
+      }).select().single();
 
       if (error) throw error;
+
+      // Notify students in the group
+      const { data: groupMembers } = await supabase
+        .from('group_members')
+        .select('etudiant_id')
+        .eq('groupe_id', exerciceFormData.groupe_id);
+
+      if (groupMembers && groupMembers.length > 0) {
+        const notifications = groupMembers.map((member) => ({
+          user_id: member.etudiant_id,
+          message: `Nouveau ${exerciceFormData.type === 'devoir' ? 'devoir' : 'quiz'}: "${exerciceFormData.titre}" a été ajouté. Date limite: ${exerciceFormData.duree} minutes.`,
+          type: 'exercice',
+        }));
+
+        await supabase.from('notifications').insert(notifications);
+      }
       
       toast({
         title: 'Succès',
-        description: 'L\'exercice a été créé',
+        description: `L'exercice a été créé et les étudiants ont été notifiés`,
       });
       
       setOpenExercice(false);
       setExerciceFormData({
         titre: '',
-        type: 'quiz',
-        duree: 30,
+        type: 'devoir',
+        duree: 60,
         groupe_id: '',
-        questions: [{ question: '', reponses: ['', '', '', ''], correcte: 0 }],
+        description: '',
       });
+      setExerciceFile(null);
       fetchData();
     } catch (error: any) {
       toast({
@@ -510,6 +568,8 @@ export default function ProfDashboard() {
         description: error.message,
         variant: 'destructive',
       });
+    } finally {
+      setUploadingExercice(false);
     }
   };
 
@@ -1473,7 +1533,7 @@ export default function ProfDashboard() {
                     Créer un Exercice
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+                <DialogContent className="max-w-2xl">
                   <DialogHeader>
                     <DialogTitle>Créer un Quiz/Devoir</DialogTitle>
                   </DialogHeader>
@@ -1484,37 +1544,42 @@ export default function ProfDashboard() {
                         id="ex-titre"
                         value={exerciceFormData.titre}
                         onChange={(e) => setExerciceFormData({ ...exerciceFormData, titre: e.target.value })}
+                        placeholder="Ex: Exercice de grammaire - Chapitre 5"
                         required
                       />
                     </div>
+                    
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <Label htmlFor="ex-type">Type</Label>
+                        <Label htmlFor="ex-type">Type *</Label>
                         <Select value={exerciceFormData.type} onValueChange={(value) => setExerciceFormData({ ...exerciceFormData, type: value })}>
                           <SelectTrigger>
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="quiz">Quiz</SelectItem>
                             <SelectItem value="devoir">Devoir</SelectItem>
+                            <SelectItem value="quiz">Quiz</SelectItem>
+                            <SelectItem value="examen">Examen</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="ex-duree">Durée (min)</Label>
+                        <Label htmlFor="ex-duree">Durée (minutes) *</Label>
                         <Input
                           id="ex-duree"
                           type="number"
+                          min="10"
                           value={exerciceFormData.duree}
                           onChange={(e) => setExerciceFormData({ ...exerciceFormData, duree: parseInt(e.target.value) })}
                         />
                       </div>
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="ex-groupe">Groupe *</Label>
+                      <Label htmlFor="ex-groupe">Groupe ciblé *</Label>
                       <Select value={exerciceFormData.groupe_id} onValueChange={(value) => setExerciceFormData({ ...exerciceFormData, groupe_id: value })}>
                         <SelectTrigger>
-                          <SelectValue placeholder="Sélectionner" />
+                          <SelectValue placeholder="Sélectionner un groupe" />
                         </SelectTrigger>
                         <SelectContent>
                           {groupes.map((g) => (
@@ -1525,29 +1590,88 @@ export default function ProfDashboard() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div className="flex justify-end gap-2">
+
+                    <div className="space-y-2">
+                      <Label htmlFor="ex-file">Fichier PDF de l'exercice *</Label>
+                      <Input
+                        id="ex-file"
+                        type="file"
+                        onChange={(e) => setExerciceFile(e.target.files?.[0] || null)}
+                        accept=".pdf,.doc,.docx"
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Uploadez le fichier contenant les exercices que les étudiants doivent résoudre (PDF, DOC, DOCX)
+                      </p>
+                    </div>
+
+                    {exerciceFile && (
+                      <div className="bg-muted/50 p-3 rounded-lg flex items-center gap-2">
+                        <FileText className="h-5 w-5 text-primary" />
+                        <span className="text-sm">{exerciceFile.name}</span>
+                      </div>
+                    )}
+
+                    <div className="bg-primary/10 p-4 rounded-lg">
+                      <p className="text-sm text-foreground flex items-center gap-2">
+                        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Les étudiants du groupe seront automatiquement notifiés de ce nouvel exercice.
+                      </p>
+                    </div>
+
+                    <div className="flex justify-end gap-2 pt-4">
                       <Button type="button" variant="outline" onClick={() => setOpenExercice(false)}>
                         Annuler
                       </Button>
-                      <Button type="submit">Créer</Button>
+                      <Button type="submit" disabled={uploadingExercice}>
+                        {uploadingExercice ? 'Création en cours...' : 'Créer l\'exercice'}
+                      </Button>
                     </div>
                   </form>
                 </DialogContent>
               </Dialog>
             </div>
+
             <div className="grid gap-4">
-              {exercices.map((ex: any) => (
-                <Card key={ex.id} className="p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">{ex.titre}</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {ex.type === 'quiz' ? 'Quiz' : 'Devoir'} - {ex.duree} min - {ex.groupes?.nom}
-                      </p>
+              {exercices.length > 0 ? (
+                exercices.map((ex: any) => (
+                  <Card key={ex.id} className="p-6">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-semibold text-lg">{ex.titre}</h3>
+                          <Badge className={
+                            ex.type === 'examen' ? 'bg-destructive text-destructive-foreground' :
+                            ex.type === 'devoir' ? 'bg-primary text-primary-foreground' :
+                            'bg-secondary text-secondary-foreground'
+                          }>
+                            {ex.type}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                          <span>Durée: {ex.duree} min</span>
+                          <span>Groupe: {ex.groupes?.nom} - {ex.groupes?.niveau}</span>
+                          <span>Créé le {new Date(ex.date_creation).toLocaleDateString('fr-FR')}</span>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        {ex.fichier_url && (
+                          <Button variant="outline" size="sm" onClick={() => window.open(ex.fichier_url, '_blank')}>
+                            <Download className="h-4 w-4 mr-1" />
+                            PDF
+                          </Button>
+                        )}
+                      </div>
                     </div>
-                  </div>
+                  </Card>
+                ))
+              ) : (
+                <Card className="p-8 text-center">
+                  <p className="text-muted-foreground">Aucun exercice créé. Créez votre premier exercice pour commencer.</p>
                 </Card>
-              ))}
+              )}
             </div>
           </TabsContent>
 

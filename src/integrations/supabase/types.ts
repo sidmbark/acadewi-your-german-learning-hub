@@ -280,27 +280,33 @@ export type Database = {
         Row: {
           date_creation: string | null
           duree: number | null
+          fichier_url: string | null
           groupe_id: string | null
           id: string
-          questions: Json
+          professeur_id: string | null
+          questions: Json | null
           titre: string
           type: string
         }
         Insert: {
           date_creation?: string | null
           duree?: number | null
+          fichier_url?: string | null
           groupe_id?: string | null
           id?: string
-          questions: Json
+          professeur_id?: string | null
+          questions?: Json | null
           titre: string
           type: string
         }
         Update: {
           date_creation?: string | null
           duree?: number | null
+          fichier_url?: string | null
           groupe_id?: string | null
           id?: string
-          questions?: Json
+          professeur_id?: string | null
+          questions?: Json | null
           titre?: string
           type?: string
         }
